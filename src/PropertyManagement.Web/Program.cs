@@ -3,18 +3,16 @@ using Microsoft.EntityFrameworkCore;
 using PropertyManagement.Core.Common;
 using PropertyManagement.Data;
 using PropertyManagement.Data.Auditing;
+using PropertyManagement.Data.Seeding;
 using PropertyManagement.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddHttpContextAccessor();
 
-// "Today" for leases and availability is the calendar date in the business time zone, not the UTC date.
 var businessTimeZone = TimeZoneInfo.FindSystemTimeZoneById(builder.Configuration["Business:TimeZone"] ?? "America/New_York");
 builder.Services.AddSingleton<TimeProvider>(new BusinessTimeProvider(businessTimeZone));
 
-// Audit columns: who is signed in, and the interceptor that stamps them on every save.
 builder.Services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
 builder.Services.AddScoped<AuditSaveChangesInterceptor>();
 
@@ -33,7 +31,8 @@ builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+await DbInitializer.InitializeAsync(app.Services);
+
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
@@ -41,7 +40,6 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
