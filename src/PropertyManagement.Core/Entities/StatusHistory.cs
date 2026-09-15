@@ -1,7 +1,9 @@
+using PropertyManagement.Core.Common;
 using PropertyManagement.Core.Enums;
 
 namespace PropertyManagement.Core.Entities;
 
+/// <summary>Append-only record of a status change and its review comment.</summary>
 public class StatusHistory
 {
     public const int CommentMaxLength = 1000;
@@ -26,5 +28,20 @@ public class StatusHistory
         ChangedById = changedById;
         ChangedAt = changedAt;
         Comment = comment;
+    }
+
+    /// <summary>For changes that must explain themselves (Return, Deny).</summary>
+    internal static string RequiredComment(string? comment)
+    {
+        return Guard.Required(comment, "Comment", CommentMaxLength);
+    }
+
+    /// <summary>For changes where a comment is optional (Approve). Blank becomes null.</summary>
+    internal static string? OptionalComment(string? comment)
+    {
+        if (string.IsNullOrWhiteSpace(comment))
+            return null;
+
+        return Guard.Required(comment, "Comment", CommentMaxLength);
     }
 }

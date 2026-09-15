@@ -15,12 +15,13 @@ public class ManagerNote : AuditableEntity
         Text = null!;
     }
 
-    internal ManagerNote(string text)
+    public ManagerNote(int rentalApplicationId, string text)
     {
+        RentalApplicationId = rentalApplicationId;
         Text = Guard.Required(text, "Note", TextMaxLength);
     }
 
-    internal void Edit(string text)
+    public void Edit(string text)
     {
         Text = Guard.Required(text, "Note", TextMaxLength);
     }

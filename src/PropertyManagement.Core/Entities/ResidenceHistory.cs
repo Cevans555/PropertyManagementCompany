@@ -1,4 +1,5 @@
 using PropertyManagement.Core.Common;
+using PropertyManagement.Core.Dtos;
 using PropertyManagement.Core.ValueObjects;
 
 namespace PropertyManagement.Core.Entities;
