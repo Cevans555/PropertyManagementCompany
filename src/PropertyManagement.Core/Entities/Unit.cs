@@ -1,4 +1,4 @@
-﻿using PropertyManagement.Core.Common;
+using PropertyManagement.Core.Common;
 
 namespace PropertyManagement.Core.Entities;
 
@@ -8,6 +8,16 @@ public class Unit : AuditableEntity
     public const int MaxBedrooms = 10;
 
     private readonly List<Lease> _leases = [];
+
+    public int Id { get; private set; }
+    public int PropertyId { get; private set; }
+    public Property Property { get; private set; }
+    public string UnitNumber { get; private set; }
+    public int Bedrooms { get; private set; }
+    public decimal MonthlyRent { get; private set; }
+    public int UnitTypeId { get; private set; }
+    public UnitType UnitType { get; private set; }
+    public IReadOnlyCollection<Lease> Leases => _leases;
 
     private Unit()
     {
@@ -27,22 +37,13 @@ public class Unit : AuditableEntity
         SetDetails(unitNumber, bedrooms, monthlyRent, unitType);
     }
 
-    public int Id { get; private set; }
-    public int PropertyId { get; private set; }
-    public Property Property { get; private set; }
-    public string UnitNumber { get; private set; }
-    public int Bedrooms { get; private set; }
-    public decimal MonthlyRent { get; private set; }
-    public int UnitTypeId { get; private set; }
-    public UnitType UnitType { get; private set; }
-    public IReadOnlyCollection<Lease> Leases => _leases;
-
-    /// <summary>Requires <see cref="Leases"/> to be loaded. Queries should use <see cref="Lease.Covers"/> logic directly.</summary>
-    public bool HasActiveLeaseOn(DateOnly date) => _leases.Any(l => l.Covers(date));
+    public bool HasActiveLeaseOn(DateOnly date)
+    {
+        return _leases.Any(l => l.Covers(date));
+    }
 
     internal void Update(string unitNumber, int bedrooms, decimal monthlyRent, UnitType unitType)
     {
-        // An inactive type may stay on a unit that already has it, but can't be newly chosen.
         var keepsCurrentType = ReferenceEquals(unitType, UnitType) || (unitType.Id != 0 && unitType.Id == UnitTypeId);
         if (!keepsCurrentType && !unitType.IsActive)
             throw new DomainException($"Unit type '{unitType.Name}' is inactive and can't be selected.");

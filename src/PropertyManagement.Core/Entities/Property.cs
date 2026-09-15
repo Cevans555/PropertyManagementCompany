@@ -1,4 +1,4 @@
-﻿using PropertyManagement.Core.Common;
+using PropertyManagement.Core.Common;
 using PropertyManagement.Core.ValueObjects;
 
 namespace PropertyManagement.Core.Entities;
@@ -8,6 +8,11 @@ public class Property : AuditableEntity
     public const int NameMaxLength = 150;
 
     private readonly List<Unit> _units = [];
+
+    public int Id { get; private set; }
+    public string Name { get; private set; }
+    public Address Address { get; private set; }
+    public IReadOnlyCollection<Unit> Units => _units;
 
     private Property()
     {
@@ -20,11 +25,6 @@ public class Property : AuditableEntity
         Name = Guard.Required(name, "Name", NameMaxLength);
         Address = address ?? throw new DomainException("Address is required.");
     }
-
-    public int Id { get; private set; }
-    public string Name { get; private set; }
-    public Address Address { get; private set; }
-    public IReadOnlyCollection<Unit> Units => _units;
 
     public void Update(string name, Address address)
     {

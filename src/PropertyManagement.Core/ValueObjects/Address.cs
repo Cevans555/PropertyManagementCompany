@@ -1,4 +1,4 @@
-﻿using PropertyManagement.Core.Common;
+using PropertyManagement.Core.Common;
 
 namespace PropertyManagement.Core.ValueObjects;
 
@@ -9,6 +9,11 @@ public sealed class Address
     public const int StateMaxLength = 50;
     public const int PostalCodeMaxLength = 20;
 
+    public string Street { get; private set; }
+    public string City { get; private set; }
+    public string State { get; private set; }
+    public string PostalCode { get; private set; }
+
     public Address(string street, string city, string state, string postalCode)
     {
         Street = Guard.Required(street, "Street", StreetMaxLength);
@@ -17,10 +22,8 @@ public sealed class Address
         PostalCode = Guard.Required(postalCode, "Postal code", PostalCodeMaxLength);
     }
 
-    public string Street { get; private set; }
-    public string City { get; private set; }
-    public string State { get; private set; }
-    public string PostalCode { get; private set; }
-
-    public override string ToString() => $"{Street}, {City}, {State} {PostalCode}";
+    public override string ToString()
+    {
+        return $"{Street}, {City}, {State} {PostalCode}";
+    }
 }

@@ -1,9 +1,13 @@
 ﻿using PropertyManagement.Core.Common;
 
 namespace PropertyManagement.Core.Entities;
+
 public class UnitType : AuditableEntity
 {
     public const int NameMaxLength = 50;
+    public int Id { get; private set; }
+    public string Name { get; private set; }
+    public bool IsActive { get; private set; }
 
     private UnitType()
     {
@@ -16,13 +20,18 @@ public class UnitType : AuditableEntity
         IsActive = isActive;
     }
 
-    public int Id { get; private set; }
-    public string Name { get; private set; }
-    public bool IsActive { get; private set; }
+    public void Rename(string name)
+    {
+        Name = Guard.Required(name, "Name", NameMaxLength);
+    }
 
-    public void Rename(string name) => Name = Guard.Required(name, "Name", NameMaxLength);
+    public void Activate()
+    {
+        IsActive = true;
+    }
 
-    public void Activate() => IsActive = true;
-
-    public void Deactivate() => IsActive = false;
+    public void Deactivate()
+    {
+        IsActive = false;
+    }
 }

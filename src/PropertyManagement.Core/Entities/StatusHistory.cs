@@ -1,10 +1,18 @@
-﻿using PropertyManagement.Core.Enums;
+using PropertyManagement.Core.Enums;
 
 namespace PropertyManagement.Core.Entities;
 
 public class StatusHistory
 {
     public const int CommentMaxLength = 1000;
+
+    public int Id { get; private set; }
+    public int RentalApplicationId { get; private set; }
+    public ApplicationStatus? FromStatus { get; private set; }
+    public ApplicationStatus ToStatus { get; private set; }
+    public string ChangedById { get; private set; }
+    public DateTime ChangedAt { get; private set; }
+    public string? Comment { get; private set; }
 
     private StatusHistory()
     {
@@ -19,12 +27,4 @@ public class StatusHistory
         ChangedAt = changedAt;
         Comment = comment;
     }
-
-    public int Id { get; private set; }
-    public int RentalApplicationId { get; private set; }
-    public ApplicationStatus? FromStatus { get; private set; }
-    public ApplicationStatus ToStatus { get; private set; }
-    public string ChangedById { get; private set; }
-    public DateTime ChangedAt { get; private set; }
-    public string? Comment { get; private set; }
 }
