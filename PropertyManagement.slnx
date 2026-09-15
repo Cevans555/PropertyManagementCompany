@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/PropertyManagement.Core/PropertyManagement.Core.csproj" Id="71669a58-4690-4f65-afed-045cebfce5a1" />
+    <Project Path="src/PropertyManagement.Data/PropertyManagement.Data.csproj" Id="b92ca689-64db-4e6f-b2b8-42eb57fe8870" />
+    <Project Path="src/PropertyManagement.Web/PropertyManagement.Web.csproj" Id="ca50db6d-d336-4079-94dc-c0d45eaa7d13" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/PropertyManagement.Tests/PropertyManagement.Tests.csproj" Id="404382f7-0304-46c3-8f7a-9bc835701b4e" />
+  </Folder>
+</Solution>
