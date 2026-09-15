@@ -1,6 +1,13 @@
-﻿namespace PropertyManagement.Core.Common;
+namespace PropertyManagement.Core.Common;
 
-public sealed class BusinessTimeProvider(TimeZoneInfo timeZone) : TimeProvider
+public sealed class BusinessTimeProvider : TimeProvider
 {
-    public override TimeZoneInfo LocalTimeZone => timeZone;
+    private readonly TimeZoneInfo _timeZone;
+
+    public BusinessTimeProvider(TimeZoneInfo timeZone)
+    {
+        _timeZone = timeZone;
+    }
+
+    public override TimeZoneInfo LocalTimeZone => _timeZone;
 }
