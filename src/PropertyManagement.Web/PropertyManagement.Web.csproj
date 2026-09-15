@@ -16,4 +16,9 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.12" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\PropertyManagement.Core\PropertyManagement.Core.csproj" />
+    <ProjectReference Include="..\PropertyManagement.Data\PropertyManagement.Data.csproj" />
+  </ItemGroup>
+
 </Project>
