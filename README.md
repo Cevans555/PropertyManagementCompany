@@ -14,14 +14,18 @@ The connection string is in `src/PropertyManagement.Web/appsettings.json` and po
 
 ### Run
 Open `PropertyManagement.slnx` in Visual Studio and press F5, or run:
-   dotnet run --project src/PropertyManagement.Web
+```
+dotnet run --project src/PropertyManagement.Web
+```
 
 ## Solution structure
-   PropertyManagement.slnx
-   ├─ src/
-   │  ├─ PropertyManagement.Web    MVC app: startup, controllers, views
-   │  ├─ PropertyManagement.Core   entities and business rules (no database or web code)
-   │  └─ PropertyManagement.Data   DbContext, migrations, seeding
-   └─ tests/
-      └─ PropertyManagement.Tests  unit tests for Core
+```
+PropertyManagement.slnx
+├─ src/
+│  ├─ PropertyManagement.Web    MVC app: startup, controllers, views
+│  ├─ PropertyManagement.Core   entities and business rules (no database or web code)
+│  └─ PropertyManagement.Data   DbContext, migrations, seeding
+└─ tests/
+   └─ PropertyManagement.Tests  unit tests for Core
+```
 References point toward Core: Web → Core, Data; Data → Core; Tests → Core.
