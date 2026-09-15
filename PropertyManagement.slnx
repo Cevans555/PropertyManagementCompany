@@ -5,6 +5,7 @@
     <Project Path="src/PropertyManagement.Web/PropertyManagement.Web.csproj" Id="ca50db6d-d336-4079-94dc-c0d45eaa7d13" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/PropertyManagement.IntegrationTests/PropertyManagement.IntegrationTests.csproj" />
     <Project Path="tests/PropertyManagement.Tests/PropertyManagement.Tests.csproj" Id="404382f7-0304-46c3-8f7a-9bc835701b4e" />
   </Folder>
 </Solution>

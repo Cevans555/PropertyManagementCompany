@@ -1,16 +1,17 @@
 using System.Data;
 using PropertyManagement.Core.Common;
 using PropertyManagement.Core.Entities;
+using PropertyManagement.Data.Queries;
 
 namespace PropertyManagement.Data.Services;
 
 public sealed class ApplicationReviewService
 {
     private readonly ApplicationUpdater _updater;
-    private readonly LeaseAvailabilityQuery _leases;
+    private readonly LeaseQueries _leases;
     private readonly TimeProvider _timeProvider;
 
-    public ApplicationReviewService(ApplicationUpdater updater, LeaseAvailabilityQuery leases, TimeProvider timeProvider)
+    public ApplicationReviewService(ApplicationUpdater updater, LeaseQueries leases, TimeProvider timeProvider)
     {
         _updater = updater;
         _leases = leases;

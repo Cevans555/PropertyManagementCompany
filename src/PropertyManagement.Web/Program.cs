@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using PropertyManagement.Core.Common;
 using PropertyManagement.Data;
 using PropertyManagement.Data.Auditing;
+using PropertyManagement.Data.Queries;
 using PropertyManagement.Data.Seeding;
 using PropertyManagement.Data.Services;
 using PropertyManagement.Web.Services;
@@ -16,7 +17,7 @@ builder.Services.AddSingleton<TimeProvider>(new BusinessTimeProvider(businessTim
 
 builder.Services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
 builder.Services.AddScoped<AuditSaveChangesInterceptor>();
-builder.Services.AddScoped<LeaseAvailabilityQuery>();
+builder.Services.AddScoped<LeaseQueries>();
 builder.Services.AddScoped<ApplicationUpdater>();
 builder.Services.AddScoped<RentalApplicationService>();
 builder.Services.AddScoped<ApplicationReviewService>();
