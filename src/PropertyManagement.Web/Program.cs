@@ -10,7 +10,8 @@ builder.Services.AddDbContext<PropertyManagementDbContext>(options =>
     options.UseSqlServer(connectionString, sql => sql.MigrationsAssembly("PropertyManagement.Data")));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+builder.Services.AddDefaultIdentity<AppUser>(options => options.SignIn.RequireConfirmedAccount = true)
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<PropertyManagementDbContext>();
 builder.Services.AddControllersWithViews();
 

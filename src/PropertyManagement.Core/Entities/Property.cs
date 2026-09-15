@@ -6,9 +6,7 @@ namespace PropertyManagement.Core.Entities;
 public class Property : AuditableEntity
 {
     public const int NameMaxLength = 150;
-
     private readonly List<Unit> _units = [];
-
     public int Id { get; private set; }
     public string Name { get; private set; }
     public Address Address { get; private set; }
