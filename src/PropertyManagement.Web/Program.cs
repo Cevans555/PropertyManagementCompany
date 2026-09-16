@@ -3,7 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using PropertyManagement.Core.Common;
 using PropertyManagement.Data;
 using PropertyManagement.Data.Auditing;
+using PropertyManagement.Data.Queries;
 using PropertyManagement.Data.Seeding;
+using PropertyManagement.Data.Services;
 using PropertyManagement.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,6 +17,10 @@ builder.Services.AddSingleton<TimeProvider>(new BusinessTimeProvider(businessTim
 
 builder.Services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
 builder.Services.AddScoped<AuditSaveChangesInterceptor>();
+builder.Services.AddScoped<LeaseQueries>();
+builder.Services.AddScoped<ApplicationUpdater>();
+builder.Services.AddScoped<RentalApplicationService>();
+builder.Services.AddScoped<ApplicationReviewService>();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<PropertyManagementDbContext>((services, options) =>
