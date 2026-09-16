@@ -46,7 +46,8 @@ PropertyManagement.slnx
 │  └─ PropertyManagement.Data   DbContext, migrations, seeding
 └─ tests/
    ├─ PropertyManagement.Tests             unit tests for Core (no database)
-   └─ PropertyManagement.IntegrationTests  services against a real LocalDB database
+   ├─ PropertyManagement.IntegrationTests  services and pages against a real LocalDB database
+   └─ PropertyManagement.BrowserTests      Playwright smoke tests for the client-side flows
 ```
 References point toward Core: Web → Core, Data; Data → Core; Tests → Core.
 
@@ -86,3 +87,7 @@ This isn't a rule that every read needs a class of its own. A small one-off look
 **Expected failures aren't exceptions.** Services return a `ServiceResult`, so a broken rule, a stale save or a deadlock becomes a message a page can show.
 
 **Testing.** Domain rules are covered by fast unit tests with no database. The services are covered by integration tests against a real LocalDB database, because what's worth proving there (concurrency tokens, the serializable approval transaction, EF includes) only behaves correctly against real SQL Server.
+
+**Browser tests.** A small Playwright suite (`tests/PropertyManagement.BrowserTests`) covers only what needs JavaScript: the applicant journey with the residence modal, the review modal's approve/deny rules, the shared modal pattern on Properties, the reusable grid's paging/sorting/filtering and URL state, and saving sections with errors. The app runs on a real Kestrel port against its own temporary database, and Chromium is installed on the first run. Everything else is proven faster by the integration tests.
+
+**Logging.** Services log each status change (started, submitted, withdrawn, claimed, released, returned, denied, approved with the lease start date) at `Information`, and refused changes, stale saves, approval deadlocks and failed sign-ins at `Warning`. Entries carry ids only, never names, addresses or incomes. The domain entities don't log; the services log the outcome. EF Core's per-command SQL logging is set to `Warning` so these events are readable.

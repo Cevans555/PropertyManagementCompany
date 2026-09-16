@@ -144,7 +144,7 @@ public static partial class TestHelpers
         };
     }
 
-    private static ResidenceDetails Residence()
+    public static ResidenceDetails Residence()
     {
         return new ResidenceDetails
         {
