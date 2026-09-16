@@ -7,7 +7,7 @@ using PropertyManagement.Web.Services;
 namespace PropertyManagement.Web.Models.Api;
 
 /// <summary>Query parameters for <c>GET /api/applications</c>.</summary>
-public sealed class ApplicationListRequest
+public sealed class ApplicationListRequest : IValidatableObject
 {
     public const int MaxPageSize = 100;
 
@@ -36,4 +36,22 @@ public sealed class ApplicationListRequest
     /// <summary>Sort direction.</summary>
     [FromQuery(Name = "direction")]
     public SortDirection Direction { get; init; } = SortDirection.Desc;
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (Status is { } status && !Enum.IsDefined(status))
+        {
+            yield return new ValidationResult("Choose a valid status.", [nameof(Status)]);
+        }
+
+        if (!Enum.IsDefined(Sort))
+        {
+            yield return new ValidationResult("Choose a valid sort field.", [nameof(Sort)]);
+        }
+
+        if (!Enum.IsDefined(Direction))
+        {
+            yield return new ValidationResult("Choose a valid sort direction.", [nameof(Direction)]);
+        }
+    }
 }

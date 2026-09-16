@@ -196,6 +196,9 @@ public class ApplicationListTests
     [InlineData("pageSize=0")]
     [InlineData("page=0")]
     [InlineData("status=NotAStatus")]
+    [InlineData("sort=999")]
+    [InlineData("direction=999")]
+    [InlineData("status=999")]
     public async Task Api_InvalidParameter_Returns400ProblemDetails(string query)
     {
         var client = await _factory.CreateSignedInClientAsync(TestAccounts.Manager);
