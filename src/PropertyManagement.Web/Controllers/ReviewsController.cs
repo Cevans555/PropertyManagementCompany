@@ -128,7 +128,8 @@ public class ReviewsController : Controller
         {
             ReviewOutcome.Approve => await _reviewService.ApproveAsync(id, managerId, model.LeaseStartDate!.Value, model.Comment, cancellationToken),
             ReviewOutcome.Return => await _reviewService.ReturnAsync(id, managerId, model.Comment!, cancellationToken),
-            _ => await _reviewService.DenyAsync(id, managerId, model.Comment!, cancellationToken)
+            ReviewOutcome.Deny => await _reviewService.DenyAsync(id, managerId, model.Comment!, cancellationToken),
+            _ => ServiceResult.Failure(ReviewFormViewModel.InvalidOutcomeMessage)
         };
 
         return ToModalResult(result, ReviewFormPartial, form);

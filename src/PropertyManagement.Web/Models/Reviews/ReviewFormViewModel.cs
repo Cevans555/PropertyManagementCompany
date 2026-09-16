@@ -7,6 +7,8 @@ namespace PropertyManagement.Web.Models.Reviews;
 
 public class ReviewFormViewModel : IValidatableObject
 {
+    public const string InvalidOutcomeMessage = "Choose a valid review outcome.";
+
     [BindNever]
     public int ApplicationId { get; set; }
 
@@ -27,6 +29,12 @@ public class ReviewFormViewModel : IValidatableObject
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
+        if (Outcome is not null && !Enum.IsDefined(Outcome.Value))
+        {
+            yield return new ValidationResult(InvalidOutcomeMessage, [nameof(Outcome)]);
+            yield break;
+        }
+
         if (Outcome is ReviewOutcome.Return or ReviewOutcome.Deny && string.IsNullOrWhiteSpace(Comment))
             yield return new ValidationResult("A comment is required to return or deny an application.", [nameof(Comment)]);
 

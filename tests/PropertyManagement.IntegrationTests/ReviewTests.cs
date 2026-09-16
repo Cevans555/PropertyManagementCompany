@@ -223,6 +223,18 @@ public class ReviewTests
         Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
     }
 
+    [Fact]
+    public async Task Review_InvalidOutcome_IsRejectedAndDoesNotChangeStatus()
+    {
+        var applicationId = await ClaimedApplicationAsync();
+        var client = await _factory.CreateSignedInClientAsync(TestAccounts.Manager);
+
+        var response = await PostReviewAsync(client, applicationId, outcome: "999", comment: "Tampered outcome");
+
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
+        Assert.Equal(ApplicationStatus.UnderReview, (await StatusAndClaimAsync(applicationId)).Status);
+    }
+
     private async Task<int> SubmittedApplicationAsync()
     {
         return await _factory.CreateApplicationAsync(
