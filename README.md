@@ -46,7 +46,11 @@ dotnet test
 ```
 Runs all three suites. The integration and browser tests create a uniquely named LocalDB database for each run and drop it afterwards. The first browser-test run downloads Playwright's Chromium, so it needs internet access once. To skip the browser tests, run `dotnet test tests/PropertyManagement.Tests` and `dotnet test tests/PropertyManagement.IntegrationTests`.
 
-## Solution structure
+## Beyond the specification
+Further improvements live on a separate [`extras`](https://github.com/Cevans555/PropertyManagementCompany/tree/extras) branch that is never merged, so `main` stays exactly the submission. It has its own database so its schema can move independently.
+
+For example, property managers are warned when anyone on an application already holds another current or upcoming lease — shown on the application page, in the review modal and as a tag in the review queue. It doesn't block approval, since someone may be moving or renting a second unit. The branch's README lists each extra.
+
 ```
 PropertyManagement.slnx
 ├─ src/
