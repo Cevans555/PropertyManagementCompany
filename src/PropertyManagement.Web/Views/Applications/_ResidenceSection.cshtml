@@ -1,0 +1,37 @@
+@model ApplicationPageViewModel
+@{
+    var editable = Model.CanEdit && ViewData["ReadOnly"] is not true;
+}
+
+<section aria-labelledby="residence-heading">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h2 id="residence-heading" class="h5 mb-0">Residence history</h2>
+        @if (editable)
+        {
+            <button type="button" class="btn btn-sm btn-outline-primary"
+                    data-modal-url="@Url.Action("CreateResidence", new { applicationId = Model.Id })"
+                    data-modal-refresh="#residence-list">
+                Add residence
+            </button>
+        }
+    </div>
+
+    @if (editable)
+    {
+        <p class="text-muted">Add each prior residence with its landlord's contact details, then continue.</p>
+
+        @if (Model.SavedResidenceErrors.Count > 0)
+        {
+            <div class="alert alert-warning" role="status">
+                @foreach (var error in Model.SavedResidenceErrors)
+                {
+                    <div>@error</div>
+                }
+            </div>
+        }
+    }
+
+    <div id="residence-list" data-refresh-url="@Url.Action("ResidenceList", new { id = Model.Id })">
+        @await Component.InvokeAsync("ResidenceList", new { applicationId = Model.Id, editable })
+    </div>
+</section>

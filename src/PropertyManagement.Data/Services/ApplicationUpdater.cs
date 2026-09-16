@@ -71,7 +71,7 @@ public sealed class ApplicationUpdater
         {
             return Fail(ex.Message);
         }
-        catch (DbUpdateConcurrencyException)
+        catch (Exception ex) when (ex is DbUpdateConcurrencyException or StaleDataException)
         {
             return Fail(StaleDataMessage);
         }

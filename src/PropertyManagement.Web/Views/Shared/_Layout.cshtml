@@ -23,6 +23,12 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
                         </li>
+                        @if (User.IsInRole(Roles.Applicant))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Applications" asp-action="Available">Available units</a>
+                            </li>
+                        }
                         @if (User.IsInRole(Roles.PropertyManager))
                         {
                             <li class="nav-item">

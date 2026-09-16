@@ -1,0 +1,110 @@
+@model ApplicationPageViewModel
+@{
+    var forceReadOnly = ViewData["ReadOnly"] is true;
+    var editable = Model.CanEdit && !forceReadOnly;
+}
+
+<section aria-labelledby="applicant-heading">
+    <h2 id="applicant-heading" class="h5 mb-3">Applicant information</h2>
+
+    @if (editable)
+    {
+        <p class="text-muted">Enter your own details. Everyone on the application fills in their own information.</p>
+        <input type="hidden" asp-for="ApplicantRowVersion" />
+
+        <div class="row g-3">
+            <div class="col-sm-6">
+                <label asp-for="ApplicantDetails.FirstName" class="form-label"></label>
+                <input asp-for="ApplicantDetails.FirstName" class="form-control" autocomplete="given-name" />
+                <span asp-validation-for="ApplicantDetails.FirstName" class="text-danger"></span>
+            </div>
+            <div class="col-sm-6">
+                <label asp-for="ApplicantDetails.LastName" class="form-label"></label>
+                <input asp-for="ApplicantDetails.LastName" class="form-control" autocomplete="family-name" />
+                <span asp-validation-for="ApplicantDetails.LastName" class="text-danger"></span>
+            </div>
+            <div class="col-sm-6">
+                <label asp-for="ApplicantDetails.Phone" class="form-label"></label>
+                <input asp-for="ApplicantDetails.Phone" class="form-control" autocomplete="tel" />
+                <span asp-validation-for="ApplicantDetails.Phone" class="text-danger"></span>
+            </div>
+            <div class="col-sm-6">
+                <label asp-for="ApplicantDetails.Email" class="form-label"></label>
+                <input asp-for="ApplicantDetails.Email" class="form-control" autocomplete="email" />
+                <span asp-validation-for="ApplicantDetails.Email" class="text-danger"></span>
+            </div>
+        </div>
+
+        <fieldset class="mt-4">
+            <legend class="fs-6 fw-semibold">Current address</legend>
+            <div class="row g-3">
+                <div class="col-12">
+                    <label asp-for="ApplicantDetails.Street" class="form-label"></label>
+                    <input asp-for="ApplicantDetails.Street" class="form-control" autocomplete="street-address" />
+                    <span asp-validation-for="ApplicantDetails.Street" class="text-danger"></span>
+                </div>
+                <div class="col-sm-5">
+                    <label asp-for="ApplicantDetails.City" class="form-label"></label>
+                    <input asp-for="ApplicantDetails.City" class="form-control" autocomplete="address-level2" />
+                    <span asp-validation-for="ApplicantDetails.City" class="text-danger"></span>
+                </div>
+                <div class="col-sm-3">
+                    <label asp-for="ApplicantDetails.State" class="form-label"></label>
+                    <input asp-for="ApplicantDetails.State" class="form-control" autocomplete="address-level1" />
+                    <span asp-validation-for="ApplicantDetails.State" class="text-danger"></span>
+                </div>
+                <div class="col-sm-4">
+                    <label asp-for="ApplicantDetails.PostalCode" class="form-label"></label>
+                    <input asp-for="ApplicantDetails.PostalCode" class="form-control" autocomplete="postal-code" />
+                    <span asp-validation-for="ApplicantDetails.PostalCode" class="text-danger"></span>
+                </div>
+            </div>
+        </fieldset>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var person in Model.People)
+            {
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h3 class="h6 card-title">
+                                @person.AccountName
+                                @if (person.IsPrimary)
+                                {
+                                    <span class="badge text-bg-light border ms-1">Primary</span>
+                                }
+                            </h3>
+                            @if (person.HasSavedDetails)
+                            {
+                                <dl class="row small mb-0">
+                                    <dt class="col-4">Name</dt>
+                                    <dd class="col-8">@person.FirstName @person.LastName</dd>
+                                    <dt class="col-4">Phone</dt>
+                                    <dd class="col-8">@person.Phone</dd>
+                                    <dt class="col-4">Email</dt>
+                                    <dd class="col-8">@person.Email</dd>
+                                    <dt class="col-4">Address</dt>
+                                    <dd class="col-8 mb-0">@person.CurrentAddress</dd>
+                                </dl>
+                            }
+                            else
+                            {
+                                <p class="text-muted small mb-0">Not provided yet.</p>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</section>
+
+@if (!forceReadOnly)
+{
+    <h3 class="h6 mt-4">People on this application</h3>
+    <div id="applicant-list" data-refresh-url="@Url.Action("ApplicantList", new { id = Model.Id })">
+        @await Component.InvokeAsync("ApplicantList", new { applicationId = Model.Id, editable })
+    </div>
+}

@@ -1,0 +1,129 @@
+@model ApplicationPageViewModel
+@using System.Globalization
+@using PropertyManagement.Web.Controllers
+@{
+    ViewData["Title"] = $"Application - Unit {Model.Header.UnitNumber}";
+    var usd = CultureInfo.GetCultureInfo("en-US");
+    var sections = new[]
+    {
+        (Section: ApplicationSection.Applicant, Label: "1. Applicant information"),
+        (Section: ApplicationSection.Residences, Label: "2. Residence history"),
+        (Section: ApplicationSection.Summary, Label: "3. Summary")
+    };
+    var pageErrors = ViewData.ModelState[string.Empty]?.Errors;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+    <div>
+        <h1 class="h3 mb-1">@Model.Header.PropertyName &middot; Unit @Model.Header.UnitNumber</h1>
+        <p class="text-muted mb-0">
+            @Model.Header.UnitTypeName &middot; @Model.Header.Bedrooms bedroom(s) &middot; @Model.Header.MonthlyRent.ToString("C0", usd)/month
+        </p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <partial name="_StatusBadge" model="Model.Header.Status" />
+        @if (Model.CanWithdraw)
+        {
+            <button type="button" class="btn btn-sm btn-outline-danger"
+                    data-modal-url="@Url.Action("Withdraw", new { id = Model.Id })"
+                    data-modal-reload="true">
+                Withdraw
+            </button>
+        }
+    </div>
+</div>
+
+@if (TempData[ApplicationsController.StatusMessageKey] is string statusMessage)
+{
+    <div class="alert alert-success" role="status">@statusMessage</div>
+}
+@if (TempData[ApplicationsController.ErrorMessageKey] is string errorMessage)
+{
+    <div class="alert alert-danger" role="alert">@errorMessage</div>
+}
+
+@if (!Model.CanEdit && Model.IsApplicantOnApplication && !Model.Header.Status.IsTerminal())
+{
+    <div class="alert alert-secondary" role="status">
+        This application is @Model.Header.Status.DisplayName().ToLowerInvariant(), so it can't be changed right now.
+    </div>
+}
+
+@if (pageErrors is { Count: > 0 })
+{
+    <div class="alert alert-danger" role="alert">
+        @foreach (var error in pageErrors)
+        {
+            <div>@error.ErrorMessage</div>
+        }
+    </div>
+}
+
+<nav aria-label="Application sections" class="mb-4">
+    <ol class="nav nav-pills">
+        @foreach (var step in sections)
+        {
+            var isCurrent = step.Section == Model.Section;
+            <li class="nav-item">
+                @if (Model.CanEdit)
+                {
+                    <span class="nav-link @(isCurrent ? "active" : "disabled")" aria-current="@(isCurrent ? "step" : null)">@step.Label</span>
+                }
+                else
+                {
+                    <a class="nav-link @(isCurrent ? "active" : null)" aria-current="@(isCurrent ? "step" : null)"
+                       asp-action="Details" asp-route-id="@Model.Id" asp-route-section="@step.Section">@step.Label</a>
+                }
+            </li>
+        }
+    </ol>
+</nav>
+
+@if (Model.CanEdit)
+{
+    <form method="post" asp-action="Details" asp-route-id="@Model.Id">
+        <input type="hidden" asp-for="Section" />
+
+        <partial name="_ApplicationSection" model="Model" />
+
+        <div class="d-flex gap-2 mt-4 pt-3 border-top">
+            @if (Model.Section == ApplicationSection.Summary)
+            {
+                <button type="submit" name="command" value="@ApplicationCommands.Submit" class="btn btn-success ms-auto"
+                        disabled="@(Model.SubmitBlockers.Count > 0)">
+                    Submit application
+                </button>
+            }
+            else
+            {
+                <button type="submit" name="command" value="@ApplicationCommands.Continue" class="btn btn-primary ms-auto">Continue</button>
+            }
+
+            @if (Model.Section != ApplicationSection.Applicant)
+            {
+                <button type="submit" name="command" value="@ApplicationCommands.Back" class="btn btn-outline-secondary order-first" formnovalidate>
+                    Back
+                </button>
+            }
+        </div>
+    </form>
+}
+else
+{
+    <partial name="_ApplicationSection" model="Model" />
+
+    <div class="d-flex gap-2 mt-4 pt-3 border-top">
+        @if (Model.Section != ApplicationSection.Applicant)
+        {
+            <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.Id" asp-route-section="@Model.Section.Previous()">Back</a>
+        }
+        @if (Model.Section != ApplicationSection.Summary)
+        {
+            <a class="btn btn-outline-primary ms-auto" asp-action="Details" asp-route-id="@Model.Id" asp-route-section="@Model.Section.Next()">Next</a>
+        }
+    </div>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

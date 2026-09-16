@@ -43,6 +43,10 @@ References point toward Core: Web → Core, Data; Data → Core; Tests → Core.
 - `GET` returns a form partial. A failed `POST` returns **422** with the same partial re-rendered with its validation errors, so the modal updates in place. A successful `POST` returns JSON, so the modal closes and each refresh target reloads from its own `data-refresh-url`.
 - Controllers express that with two helpers, `ModalInvalid` and `ModalSuccess`, and view components (`PropertyList`, `UnitTable`) both render a section and serve its refresh URL, so the markup exists once.
 
+**The application page.** One page shows one section at a time (applicant information, residence history, summary). A single form posts to a single action, and the clicked button decides what happens: Continue validates and saves the current section then moves on, Back never saves, and Submit is only accepted from the summary. The same section partials render editable or read-only from a server-side decision, so the summary reuses them rather than duplicating markup, and a manager viewing an application gets the read-only rendering of the same views.
+
+**Stale saves.** Two applicants can edit one application at once, so each save carries the version it was loaded with: the applicant's row version for their own section, and a section version for the shared residence list. A save from a stale page is rejected with a message to reload rather than overwriting someone else's work.
+
 **Expected failures aren't exceptions.** Services return a `ServiceResult`, so a broken rule, a stale save or a deadlock becomes a message a page can show.
 
 **Testing.** Domain rules are covered by fast unit tests with no database. The services are covered by integration tests against a real LocalDB database, because what's worth proving there (concurrency tokens, the serializable approval transaction, EF includes) only behaves correctly against real SQL Server.
