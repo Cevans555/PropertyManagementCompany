@@ -1,0 +1,68 @@
+@model UnitTableViewModel
+@using System.Globalization
+@{
+    var usd = CultureInfo.GetCultureInfo("en-US");
+}
+
+@if (Model.Units.Count == 0)
+{
+    <div class="text-center text-muted border rounded py-5">This property has no units yet.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th scope="col">Unit</th>
+                    <th scope="col">Type</th>
+                    <th scope="col" class="text-end">Bedrooms</th>
+                    <th scope="col" class="text-end">Monthly rent</th>
+                    <th scope="col">Availability</th>
+                    <th scope="col" class="text-end">Applications</th>
+                    <th scope="col"><span class="visually-hidden">Actions</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var unit in Model.Units)
+                {
+                    <tr>
+                        <td class="fw-semibold">@unit.UnitNumber</td>
+                        <td>
+                            @unit.UnitTypeName
+                            @if (!unit.UnitTypeIsActive)
+                            {
+                                <span class="badge text-bg-warning ms-1" title="This type can't be chosen for other units">Inactive</span>
+                            }
+                        </td>
+                        <td class="text-end">@unit.Bedrooms</td>
+                        <td class="text-end">@unit.MonthlyRent.ToString("C0", usd)</td>
+                        <td>
+                            @if (unit.LeasedUntil is { } leasedUntil)
+                            {
+                                <span class="badge text-bg-secondary">Leased until @leasedUntil.ToString("MMM d, yyyy", usd)</span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-success">Available</span>
+                            }
+                        </td>
+                        <td class="text-end">@unit.ApplicationCount</td>
+                        <td class="text-end text-nowrap">
+                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                    data-modal-url="@Url.Action("Edit", "Units", new { id = unit.Id })"
+                                    data-modal-refresh="#unit-table">
+                                Edit
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                    data-modal-url="@Url.Action("Delete", "Units", new { id = unit.Id })"
+                                    data-modal-refresh="#unit-table">
+                                Remove
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
