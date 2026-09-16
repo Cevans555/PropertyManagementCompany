@@ -1,40 +1,24 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using PropertyManagement.Data;
 using PropertyManagement.Web.Models.Reviews;
+using PropertyManagement.Web.Queries;
 
 namespace PropertyManagement.Web.ViewComponents;
 
 public class ManagerNotesViewComponent : ViewComponent
 {
-    private readonly PropertyManagementDbContext _db;
+    private readonly ReviewQueries _queries;
 
-    public ManagerNotesViewComponent(PropertyManagementDbContext db)
+    public ManagerNotesViewComponent(ReviewQueries queries)
     {
-        _db = db;
+        _queries = queries;
     }
 
     public async Task<IViewComponentResult> InvokeAsync(int applicationId)
     {
-        var notes = await _db.ManagerNotes
-            .AsNoTracking()
-            .Where(n => n.RentalApplicationId == applicationId)
-            .OrderByDescending(n => n.CreatedAt)
-            .Select(n => new ManagerNoteRowViewModel
-            {
-                Id = n.Id,
-                Text = n.Text,
-                Author = _db.Users.Where(u => u.Id == n.CreatedById).Select(u => u.FirstName + " " + u.LastName).FirstOrDefault() ?? n.CreatedById,
-                CreatedAt = n.CreatedAt,
-                ModifiedAt = n.ModifiedAt,
-                ModifiedBy = _db.Users.Where(u => u.Id == n.ModifiedById).Select(u => u.FirstName + " " + u.LastName).FirstOrDefault()
-            })
-            .ToListAsync(HttpContext.RequestAborted);
-
         return View(new ManagerNotesViewModel
         {
             ApplicationId = applicationId,
-            Notes = notes
+            Notes = await _queries.NotesAsync(applicationId, HttpContext.RequestAborted)
         });
     }
 }

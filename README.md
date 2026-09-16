@@ -44,7 +44,12 @@ References point toward Core: Web → Core, Data; Data → Core; Tests → Core.
 
 **Rich entities, thin services.** `RentalApplication` is the aggregate root and enforces the rules; nothing can change an application except through its methods. Services load it, answer the questions it can't (such as whether a unit is already leased), call the method and save.
 
-**Queries vs services.** `Data/Queries` holds reusable or specialized reads, like the lease availability checks shared by starting, submitting and approving. Services own saving and transactions. A one-line existence check inside a service stays there rather than becoming a class of its own.
+**Queries vs services.** A read is always a named query class, never EF LINQ written inline in a controller or view component. Which project it lives in follows the shape it returns:
+
+- `Data/Queries` answers questions about the data itself, with no presentation types involved — lease availability, "does this applicant already have an open application on this unit", "which application does this note belong to". Services and controllers both use them.
+- `Web/Queries` holds reads that project straight into view models. They belong to Web because that's what they're coupled to; references only point one way (`Web → Data → Core`), so a query in Data physically cannot return a view model without inventing a parallel DTO for every list on every page. With one front end that layer would be cost without benefit.
+
+Services own saving, transactions and orchestration; entities own the rules. A one-line existence check inside a service stays there rather than becoming a class of its own.
 
 **Modal pattern.** Create, edit and remove happen in one shared modal in the layout, driven by `wwwroot/js/modal.js`:
 

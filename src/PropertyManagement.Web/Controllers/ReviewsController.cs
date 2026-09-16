@@ -2,11 +2,10 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using PropertyManagement.Core.Common;
 using PropertyManagement.Core.Entities;
 using PropertyManagement.Core.Enums;
-using PropertyManagement.Data;
+using PropertyManagement.Data.Queries;
 using PropertyManagement.Data.Services;
 using PropertyManagement.Web.Authorization;
 using PropertyManagement.Web.Infrastructure;
@@ -23,20 +22,20 @@ public class ReviewsController : Controller
     private const string NoteFormPartial = "_NoteForm";
     private const string ConfirmPartial = "_DeleteConfirm";
 
-    private readonly PropertyManagementDbContext _db;
+    private readonly ManagerNoteQueries _notes;
     private readonly ApplicationReviewService _reviewService;
     private readonly ManagerNoteService _noteService;
     private readonly ApplicationPageBuilder _pageBuilder;
     private readonly TimeProvider _timeProvider;
 
     public ReviewsController(
-        PropertyManagementDbContext db,
+        ManagerNoteQueries notes,
         ApplicationReviewService reviewService,
         ManagerNoteService noteService,
         ApplicationPageBuilder pageBuilder,
         TimeProvider timeProvider)
     {
-        _db = db;
+        _notes = notes;
         _reviewService = reviewService;
         _noteService = noteService;
         _pageBuilder = pageBuilder;
@@ -173,7 +172,7 @@ public class ReviewsController : Controller
     [HttpGet]
     public async Task<IActionResult> EditNote(int id, CancellationToken cancellationToken)
     {
-        var note = await _db.ManagerNotes.AsNoTracking().SingleOrDefaultAsync(n => n.Id == id, cancellationToken);
+        var note = await _notes.FindAsync(id, cancellationToken);
         if (note is null)
             return NotFound();
 
@@ -188,7 +187,7 @@ public class ReviewsController : Controller
     [HttpPost]
     public async Task<IActionResult> EditNote(int id, NoteFormViewModel model, CancellationToken cancellationToken)
     {
-        var applicationId = await NoteApplicationIdAsync(id, cancellationToken);
+        var applicationId = await _notes.ApplicationIdAsync(id, cancellationToken);
         if (applicationId is null)
             return NotFound();
 
@@ -208,7 +207,7 @@ public class ReviewsController : Controller
     [HttpGet]
     public async Task<IActionResult> DeleteNote(int id, CancellationToken cancellationToken)
     {
-        var applicationId = await NoteApplicationIdAsync(id, cancellationToken);
+        var applicationId = await _notes.ApplicationIdAsync(id, cancellationToken);
         if (applicationId is null)
             return NotFound();
 
@@ -223,7 +222,7 @@ public class ReviewsController : Controller
     [ActionName(nameof(DeleteNote))]
     public async Task<IActionResult> DeleteNoteConfirmed(int id, CancellationToken cancellationToken)
     {
-        var applicationId = await NoteApplicationIdAsync(id, cancellationToken);
+        var applicationId = await _notes.ApplicationIdAsync(id, cancellationToken);
         if (applicationId is null)
             return NotFound();
 
@@ -246,14 +245,6 @@ public class ReviewsController : Controller
             return (null, Forbid());
 
         return (application, null);
-    }
-
-    private Task<int?> NoteApplicationIdAsync(int noteId, CancellationToken cancellationToken)
-    {
-        return _db.ManagerNotes
-            .Where(n => n.Id == noteId)
-            .Select(n => (int?)n.RentalApplicationId)
-            .SingleOrDefaultAsync(cancellationToken);
     }
 
     private ReviewFormViewModel NewReviewForm(RentalApplication application)

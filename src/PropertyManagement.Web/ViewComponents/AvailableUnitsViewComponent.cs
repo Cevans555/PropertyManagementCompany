@@ -1,55 +1,22 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using PropertyManagement.Core.Common;
-using PropertyManagement.Core.Enums;
-using PropertyManagement.Data;
-using PropertyManagement.Web.Models.Applications;
+using PropertyManagement.Web.Queries;
 
 namespace PropertyManagement.Web.ViewComponents;
 
 public class AvailableUnitsViewComponent : ViewComponent
 {
-    private readonly PropertyManagementDbContext _db;
-    private readonly TimeProvider _timeProvider;
+    private readonly UnitQueries _queries;
 
-    public AvailableUnitsViewComponent(PropertyManagementDbContext db, TimeProvider timeProvider)
+    public AvailableUnitsViewComponent(UnitQueries queries)
     {
-        _db = db;
-        _timeProvider = timeProvider;
+        _queries = queries;
     }
 
     public async Task<IViewComponentResult> InvokeAsync()
     {
-        var today = _timeProvider.Today();
         var userId = UserClaimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        var units = await _db.Units
-            .AsNoTracking()
-            .Where(u => !u.Leases.Any(l => l.StartDate <= today && l.EndDate >= today))
-            .OrderBy(u => u.Property.Name)
-            .ThenBy(u => u.UnitNumber)
-            .Select(u => new AvailableUnitViewModel
-            {
-                UnitId = u.Id,
-                PropertyName = u.Property.Name,
-                City = u.Property.Address.City,
-                State = u.Property.Address.State,
-                UnitNumber = u.UnitNumber,
-                UnitTypeName = u.UnitType.Name,
-                Bedrooms = u.Bedrooms,
-                MonthlyRent = u.MonthlyRent,
-                OpenApplicationId = _db.RentalApplications
-                    .Where(a => a.UnitId == u.Id
-                        && a.Applicants.Any(p => p.UserId == userId)
-                        && a.Status != ApplicationStatus.Approved
-                        && a.Status != ApplicationStatus.Denied
-                        && a.Status != ApplicationStatus.Withdrawn)
-                    .Select(a => (int?)a.Id)
-                    .FirstOrDefault()
-            })
-            .ToListAsync(HttpContext.RequestAborted);
-
-        return View(units);
+        return View(await _queries.AvailableAsync(userId, HttpContext.RequestAborted));
     }
 }

@@ -1,21 +1,21 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using PropertyManagement.Core.Entities;
 using PropertyManagement.Core.Enums;
 using PropertyManagement.Core.Security;
 using PropertyManagement.Core.Validation;
-using PropertyManagement.Data;
+using PropertyManagement.Data.Queries;
 using PropertyManagement.Data.Services;
 using PropertyManagement.Web.Authorization;
 using PropertyManagement.Web.Infrastructure;
 using PropertyManagement.Web.Models;
 using PropertyManagement.Web.Models.Applications;
+using PropertyManagement.Web.Queries;
 using PropertyManagement.Web.Services;
 
 namespace PropertyManagement.Web.Controllers;
@@ -31,18 +31,21 @@ public class ApplicationsController : Controller
     private const string CoApplicantFormPartial = "_CoApplicantForm";
     private const string ConfirmPartial = "_DeleteConfirm";
 
-    private readonly PropertyManagementDbContext _db;
+    private readonly ApplicationQueries _applications;
+    private readonly PropertyQueries _properties;
     private readonly RentalApplicationService _applicationService;
     private readonly ApplicationPageBuilder _pageBuilder;
     private readonly IOptionsSnapshot<FeatureOptions> _features;
 
     public ApplicationsController(
-        PropertyManagementDbContext db,
+        ApplicationQueries applications,
+        PropertyQueries properties,
         RentalApplicationService applicationService,
         ApplicationPageBuilder pageBuilder,
         IOptionsSnapshot<FeatureOptions> features)
     {
-        _db = db;
+        _applications = applications;
+        _properties = properties;
         _applicationService = applicationService;
         _pageBuilder = pageBuilder;
         _features = features;
@@ -57,15 +60,7 @@ public class ApplicationsController : Controller
             .Select(s => new SelectListItem(s.DisplayName(), s.ToString(), s == status))
             .ToList();
 
-        var properties = await _db.Properties
-            .AsNoTracking()
-            .OrderBy(p => p.Name)
-            .Select(p => new { p.Id, p.Name })
-            .ToListAsync(cancellationToken);
-
-        var propertyOptions = properties
-            .Select(p => new SelectListItem(p.Name, p.Id.ToString(CultureInfo.InvariantCulture), p.Id == propertyId))
-            .ToList();
+        var propertyOptions = await _properties.OptionsAsync(propertyId, cancellationToken);
 
         return View(new ApplicationListPageViewModel
         {
@@ -90,14 +85,7 @@ public class ApplicationsController : Controller
     {
         var userId = CurrentUserId;
 
-        var existingId = await _db.RentalApplications
-            .Where(a => a.UnitId == unitId
-                && a.Applicants.Any(p => p.UserId == userId)
-                && a.Status != Core.Enums.ApplicationStatus.Approved
-                && a.Status != Core.Enums.ApplicationStatus.Denied
-                && a.Status != Core.Enums.ApplicationStatus.Withdrawn)
-            .Select(a => (int?)a.Id)
-            .FirstOrDefaultAsync(cancellationToken);
+        var existingId = await _applications.OpenApplicationIdAsync(unitId, userId, cancellationToken);
 
         if (existingId is not null)
             return RedirectToAction(nameof(Details), new { id = existingId });
@@ -375,10 +363,7 @@ public class ApplicationsController : Controller
     private async Task<(RentalApplication? Application, IActionResult? Denied)> LoadAuthorizedForResidenceAsync(
         int residenceId, CancellationToken cancellationToken)
     {
-        var applicationId = await _db.ResidenceHistories
-            .Where(r => r.Id == residenceId)
-            .Select(r => (int?)r.RentalApplicationId)
-            .SingleOrDefaultAsync(cancellationToken);
+        var applicationId = await _applications.ApplicationIdForResidenceAsync(residenceId, cancellationToken);
 
         if (applicationId is null)
             return (null, NotFound());
