@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -43,6 +43,26 @@ public sealed class ApplicationPageBuilder
     {
         var result = await _authorizationService.AuthorizeAsync(user, application, operation);
         return result.Succeeded;
+    }
+
+    /// <summary>
+    /// Loads an application and checks the user may perform <paramref name="operation"/> on it. An application the
+    /// user can't even view comes back as not found rather than forbidden, so its existence isn't disclosed.
+    /// </summary>
+    public async Task<ApplicationAccess> AuthorizeAsync(
+        ClaimsPrincipal user,
+        int applicationId,
+        OperationAuthorizationRequirement operation,
+        CancellationToken cancellationToken)
+    {
+        var application = await LoadAsync(applicationId, cancellationToken);
+        if (application is null || !await IsAllowedAsync(user, application, ApplicationOperations.View))
+            return ApplicationAccess.NotFound();
+
+        if (operation != ApplicationOperations.View && !await IsAllowedAsync(user, application, operation))
+            return ApplicationAccess.Forbidden();
+
+        return ApplicationAccess.Allowed(application);
     }
 
     public async Task<ApplicationPageViewModel> BuildAsync(

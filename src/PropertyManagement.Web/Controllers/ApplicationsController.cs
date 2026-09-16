@@ -1,7 +1,4 @@
-using System.Globalization;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Options;
@@ -27,8 +24,6 @@ public class ApplicationsController : Controller
     public const string WarningMessageKey = "WarningMessage";
     public const string ErrorMessageKey = "ErrorMessage";
 
-    private const string ResidenceFormPartial = "_ResidenceForm";
-    private const string CoApplicantFormPartial = "_CoApplicantForm";
     private const string ConfirmPartial = "_DeleteConfirm";
 
     private readonly ApplicationQueries _applications;
@@ -51,8 +46,6 @@ public class ApplicationsController : Controller
         _features = features;
     }
 
-    private string CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-
     [HttpGet]
     public async Task<IActionResult> Index(ApplicationStatus? status, int? propertyId, CancellationToken cancellationToken)
     {
@@ -60,15 +53,13 @@ public class ApplicationsController : Controller
             .Select(s => new SelectListItem(s.DisplayName(), s.ToString(), s == status))
             .ToList();
 
-        var propertyOptions = await _properties.OptionsAsync(propertyId, cancellationToken);
-
         return View(new ApplicationListPageViewModel
         {
             Status = status,
             PropertyId = propertyId,
             IsManager = User.IsInRole(Roles.PropertyManager),
             StatusOptions = statusOptions,
-            PropertyOptions = propertyOptions
+            PropertyOptions = await _properties.OptionsAsync(propertyId, cancellationToken)
         });
     }
 
@@ -83,10 +74,9 @@ public class ApplicationsController : Controller
     [Authorize(Policy = Policies.Applicant)]
     public async Task<IActionResult> Start(int unitId, CancellationToken cancellationToken)
     {
-        var userId = CurrentUserId;
+        var userId = User.Id();
 
         var existingId = await _applications.OpenApplicationIdAsync(unitId, userId, cancellationToken);
-
         if (existingId is not null)
             return RedirectToAction(nameof(Details), new { id = existingId });
 
@@ -103,14 +93,15 @@ public class ApplicationsController : Controller
     [HttpGet]
     public async Task<IActionResult> Details(int id, ApplicationSection? section, CancellationToken cancellationToken)
     {
-        var (application, denied) = await LoadAuthorizedAsync(id, ApplicationOperations.View, cancellationToken);
-        if (application is null)
-            return denied!;
+        var access = await _pageBuilder.AuthorizeAsync(User, id, ApplicationOperations.View, cancellationToken);
+        if (access.Application is null)
+            return this.DeniedResult(access);
 
-        var canEdit = await _pageBuilder.IsAllowedAsync(User, application, ApplicationOperations.Edit);
+        var canEdit = await _pageBuilder.IsAllowedAsync(User, access.Application, ApplicationOperations.Edit);
         var defaultSection = canEdit ? ApplicationSection.Applicant : ApplicationSection.Summary;
 
-        var page = await _pageBuilder.BuildAsync(application, section ?? defaultSection, User, posted: null, cancellationToken);
+        var page = await _pageBuilder.BuildAsync(
+            access.Application, section ?? defaultSection, User, posted: null, cancellationToken);
 
         if (page.CanEdit && page.Section == ApplicationSection.Applicant)
         {
@@ -126,70 +117,26 @@ public class ApplicationsController : Controller
     [HttpPost]
     public async Task<IActionResult> Details(int id, ApplicationPageViewModel model, string? command, CancellationToken cancellationToken)
     {
-        var (application, denied) = await LoadAuthorizedAsync(id, ApplicationOperations.Edit, cancellationToken);
-        if (application is null)
-            return denied!;
+        var access = await _pageBuilder.AuthorizeAsync(User, id, ApplicationOperations.Edit, cancellationToken);
+        if (access.Application is null)
+            return this.DeniedResult(access);
 
-        var userId = CurrentUserId;
+        var application = access.Application;
+        var userId = User.Id();
+
         switch (command)
         {
             case ApplicationCommands.Back:
                 return RedirectToSection(id, model.Section.Previous());
 
             case ApplicationCommands.Continue when model.Section == ApplicationSection.Applicant:
-            {
-                KeepModelStateFor(nameof(model.ApplicantDetails));
-
-                var details = model.ApplicantDetails.ToDetails();
-                var allowInvalid = _features.Value.SaveInvalidSections;
-                var errors = ApplicantDetailsRules.Validate(details);
-
-                if (!ModelState.IsValid && (!allowInvalid || errors.Any(e => e.BlocksSaving)))
-                    return await RedisplayAsync(application, model, error: null, cancellationToken);
-
-                var result = await _applicationService.SaveApplicantDetailsAsync(
-                    id, userId, details, DecodeRowVersion(model.ApplicantRowVersion), allowInvalid, cancellationToken);
-                if (!result.Succeeded)
-                    return await RedisplayAsync(application, model, result.Error, cancellationToken);
-
-                if (errors.Count > 0)
-                {
-                    TempData[WarningMessageKey] =
-                        "Your applicant information was saved with errors. You can keep going, but you'll need to fix them before you submit.";
-                }
-
-                return RedirectToSection(id, ApplicationSection.Residences);
-            }
+                return await ContinueApplicantAsync(id, userId, application, model, cancellationToken);
 
             case ApplicationCommands.Continue when model.Section == ApplicationSection.Residences:
-            {
-                ModelState.Clear();
-
-                var allowInvalid = _features.Value.SaveInvalidSections;
-                var result = await _applicationService.SaveResidenceSectionAsync(
-                    id, userId, model.ResidenceSectionVersion, allowInvalid, cancellationToken);
-                if (!result.Succeeded)
-                    return await RedisplayAsync(application, model, result.Error, cancellationToken);
-
-                if (ResidenceSectionRules.Validate(application.Residences.Count).Count > 0)
-                {
-                    TempData[WarningMessageKey] =
-                        "Your residence history was saved with errors. You'll need to fix them before you submit.";
-                }
-
-                return RedirectToSection(id, ApplicationSection.Summary);
-            }
+                return await ContinueResidencesAsync(id, userId, application, model, cancellationToken);
 
             case ApplicationCommands.Submit when model.Section == ApplicationSection.Summary:
-            {
-                ModelState.Clear();
-                var result = await _applicationService.SubmitAsync(id, userId, cancellationToken);
-                if (!result.Succeeded)
-                    return await RedisplayAsync(application, model, result.Error, cancellationToken);
-
-                TempData[StatusMessageKey] = "Your application was submitted.";
-                return RedirectToAction(nameof(Details), new { id });
-            }
+                return await SubmitApplicationAsync(id, userId, application, model, cancellationToken);
 
             default:
                 return BadRequest();
@@ -197,140 +144,11 @@ public class ApplicationsController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> ResidenceList(int id, CancellationToken cancellationToken)
-    {
-        var (application, denied) = await LoadAuthorizedAsync(id, ApplicationOperations.View, cancellationToken);
-        if (application is null)
-            return denied!;
-
-        var editable = await _pageBuilder.IsAllowedAsync(User, application, ApplicationOperations.Edit);
-        return ViewComponent("ResidenceList", new { applicationId = id, editable });
-    }
-
-    [HttpGet]
-    public async Task<IActionResult> ApplicantList(int id, CancellationToken cancellationToken)
-    {
-        var (application, denied) = await LoadAuthorizedAsync(id, ApplicationOperations.View, cancellationToken);
-        if (application is null)
-            return denied!;
-
-        var editable = await _pageBuilder.IsAllowedAsync(User, application, ApplicationOperations.Edit);
-        return ViewComponent("ApplicantList", new { applicationId = id, editable });
-    }
-
-    [HttpGet]
-    public async Task<IActionResult> CreateResidence(int applicationId, CancellationToken cancellationToken)
-    {
-        var (application, denied) = await LoadAuthorizedAsync(applicationId, ApplicationOperations.Edit, cancellationToken);
-        if (application is null)
-            return denied!;
-
-        var model = new ResidenceFormViewModel
-        {
-            ApplicationId = applicationId,
-            ResidenceSectionVersion = application.ResidenceSectionVersion
-        };
-
-        return PartialView(ResidenceFormPartial, model);
-    }
-
-    [HttpPost]
-    public async Task<IActionResult> CreateResidence(int applicationId, ResidenceFormViewModel model, CancellationToken cancellationToken)
-    {
-        var (application, denied) = await LoadAuthorizedAsync(applicationId, ApplicationOperations.Edit, cancellationToken);
-        if (application is null)
-            return denied!;
-
-        model.ApplicationId = applicationId;
-        if (!ModelState.IsValid)
-            return this.ModalInvalid(ResidenceFormPartial, model);
-
-        var result = await _applicationService.AddResidenceAsync(
-            applicationId, CurrentUserId, model.ToInput(), model.ResidenceSectionVersion, cancellationToken);
-        return ToModalResult(result, ResidenceFormPartial, model);
-    }
-
-    [HttpGet]
-    public async Task<IActionResult> EditResidence(int id, CancellationToken cancellationToken)
-    {
-        var (application, denied) = await LoadAuthorizedForResidenceAsync(id, cancellationToken);
-        if (application is null)
-            return denied!;
-
-        var residence = application.Residences.Single(r => r.Id == id);
-        return PartialView(ResidenceFormPartial, ResidenceFormViewModel.From(residence, application.Id, application.ResidenceSectionVersion));
-    }
-
-    [HttpPost]
-    public async Task<IActionResult> EditResidence(int id, ResidenceFormViewModel model, CancellationToken cancellationToken)
-    {
-        var (application, denied) = await LoadAuthorizedForResidenceAsync(id, cancellationToken);
-        if (application is null)
-            return denied!;
-
-        model.Id = id;
-        model.ApplicationId = application.Id;
-        if (!ModelState.IsValid)
-            return this.ModalInvalid(ResidenceFormPartial, model);
-
-        var result = await _applicationService.UpdateResidenceAsync(
-            application.Id, CurrentUserId, id, model.ToInput(), model.ResidenceSectionVersion, cancellationToken);
-        return ToModalResult(result, ResidenceFormPartial, model);
-    }
-
-    [HttpGet]
-    public async Task<IActionResult> DeleteResidence(int id, CancellationToken cancellationToken)
-    {
-        var (application, denied) = await LoadAuthorizedForResidenceAsync(id, cancellationToken);
-        if (application is null)
-            return denied!;
-
-        return PartialView(ConfirmPartial, RemoveResidenceConfirmation(application, id, application.ResidenceSectionVersion));
-    }
-
-    [HttpPost]
-    public async Task<IActionResult> DeleteResidence(int id, Guid residenceSectionVersion, CancellationToken cancellationToken)
-    {
-        var (application, denied) = await LoadAuthorizedForResidenceAsync(id, cancellationToken);
-        if (application is null)
-            return denied!;
-
-        var result = await _applicationService.RemoveResidenceAsync(
-            application.Id, CurrentUserId, id, residenceSectionVersion, cancellationToken);
-        return ToModalResult(result, ConfirmPartial, RemoveResidenceConfirmation(application, id, residenceSectionVersion));
-    }
-
-    [HttpGet]
-    public async Task<IActionResult> AddCoApplicant(int applicationId, CancellationToken cancellationToken)
-    {
-        var (application, denied) = await LoadAuthorizedAsync(applicationId, ApplicationOperations.Edit, cancellationToken);
-        if (application is null)
-            return denied!;
-
-        return PartialView(CoApplicantFormPartial, new CoApplicantFormViewModel { ApplicationId = applicationId });
-    }
-
-    [HttpPost]
-    public async Task<IActionResult> AddCoApplicant(int applicationId, CoApplicantFormViewModel model, CancellationToken cancellationToken)
-    {
-        var (application, denied) = await LoadAuthorizedAsync(applicationId, ApplicationOperations.Edit, cancellationToken);
-        if (application is null)
-            return denied!;
-
-        model.ApplicationId = applicationId;
-        if (!ModelState.IsValid)
-            return this.ModalInvalid(CoApplicantFormPartial, model);
-
-        var result = await _applicationService.AddCoApplicantAsync(applicationId, CurrentUserId, model.Email, cancellationToken);
-        return ToModalResult(result, CoApplicantFormPartial, model);
-    }
-
-    [HttpGet]
     public async Task<IActionResult> Withdraw(int id, CancellationToken cancellationToken)
     {
-        var (application, denied) = await LoadAuthorizedAsync(id, ApplicationOperations.Withdraw, cancellationToken);
-        if (application is null)
-            return denied!;
+        var access = await _pageBuilder.AuthorizeAsync(User, id, ApplicationOperations.Withdraw, cancellationToken);
+        if (access.Application is null)
+            return this.DeniedResult(access);
 
         return PartialView(ConfirmPartial, WithdrawConfirmation(id));
     }
@@ -339,36 +157,71 @@ public class ApplicationsController : Controller
     [ActionName(nameof(Withdraw))]
     public async Task<IActionResult> WithdrawConfirmed(int id, CancellationToken cancellationToken)
     {
-        var (application, denied) = await LoadAuthorizedAsync(id, ApplicationOperations.Withdraw, cancellationToken);
-        if (application is null)
-            return denied!;
+        var access = await _pageBuilder.AuthorizeAsync(User, id, ApplicationOperations.Withdraw, cancellationToken);
+        if (access.Application is null)
+            return this.DeniedResult(access);
 
-        var result = await _applicationService.WithdrawAsync(id, CurrentUserId, cancellationToken);
-        return ToModalResult(result, ConfirmPartial, WithdrawConfirmation(id));
+        var result = await _applicationService.WithdrawAsync(id, User.Id(), cancellationToken);
+        return this.ToModalResult(result, ConfirmPartial, WithdrawConfirmation(id));
     }
 
-    private async Task<(RentalApplication? Application, IActionResult? Denied)> LoadAuthorizedAsync(
-        int applicationId, OperationAuthorizationRequirement operation, CancellationToken cancellationToken)
+    private async Task<IActionResult> ContinueApplicantAsync(
+        int id, string userId, RentalApplication application, ApplicationPageViewModel model, CancellationToken cancellationToken)
     {
-        var application = await _pageBuilder.LoadAsync(applicationId, cancellationToken);
-        if (application is null || !await _pageBuilder.IsAllowedAsync(User, application, ApplicationOperations.View))
-            return (null, NotFound());
+        KeepModelStateFor(nameof(model.ApplicantDetails));
 
-        if (operation != ApplicationOperations.View && !await _pageBuilder.IsAllowedAsync(User, application, operation))
-            return (null, Forbid());
+        var details = model.ApplicantDetails.ToDetails();
+        var allowInvalid = _features.Value.SaveInvalidSections;
+        var errors = ApplicantDetailsRules.Validate(details);
 
-        return (application, null);
+        if (!ModelState.IsValid && (!allowInvalid || errors.Any(e => e.BlocksSaving)))
+            return await RedisplayAsync(application, model, error: null, cancellationToken);
+
+        var result = await _applicationService.SaveApplicantDetailsAsync(
+            id, userId, details, DecodeRowVersion(model.ApplicantRowVersion), allowInvalid, cancellationToken);
+        if (!result.Succeeded)
+            return await RedisplayAsync(application, model, result.Error, cancellationToken);
+
+        if (errors.Count > 0)
+        {
+            TempData[WarningMessageKey] =
+                "Your applicant information was saved with errors. You can keep going, but you'll need to fix them before you submit.";
+        }
+
+        return RedirectToSection(id, ApplicationSection.Residences);
     }
 
-    private async Task<(RentalApplication? Application, IActionResult? Denied)> LoadAuthorizedForResidenceAsync(
-        int residenceId, CancellationToken cancellationToken)
+    private async Task<IActionResult> ContinueResidencesAsync(
+        int id, string userId, RentalApplication application, ApplicationPageViewModel model, CancellationToken cancellationToken)
     {
-        var applicationId = await _applications.ApplicationIdForResidenceAsync(residenceId, cancellationToken);
+        ModelState.Clear();
 
-        if (applicationId is null)
-            return (null, NotFound());
+        var allowInvalid = _features.Value.SaveInvalidSections;
+        var result = await _applicationService.SaveResidenceSectionAsync(
+            id, userId, model.ResidenceSectionVersion, allowInvalid, cancellationToken);
+        if (!result.Succeeded)
+            return await RedisplayAsync(application, model, result.Error, cancellationToken);
 
-        return await LoadAuthorizedAsync(applicationId.Value, ApplicationOperations.Edit, cancellationToken);
+        if (ResidenceSectionRules.Validate(application.Residences.Count).Count > 0)
+        {
+            TempData[WarningMessageKey] =
+                "Your residence history was saved with errors. You'll need to fix them before you submit.";
+        }
+
+        return RedirectToSection(id, ApplicationSection.Summary);
+    }
+
+    private async Task<IActionResult> SubmitApplicationAsync(
+        int id, string userId, RentalApplication application, ApplicationPageViewModel model, CancellationToken cancellationToken)
+    {
+        ModelState.Clear();
+
+        var result = await _applicationService.SubmitAsync(id, userId, cancellationToken);
+        if (!result.Succeeded)
+            return await RedisplayAsync(application, model, result.Error, cancellationToken);
+
+        TempData[StatusMessageKey] = "Your application was submitted.";
+        return RedirectToAction(nameof(Details), new { id });
     }
 
     private async Task<IActionResult> RedisplayAsync(
@@ -394,34 +247,6 @@ public class ApplicationsController : Controller
     private IActionResult RedirectToSection(int id, ApplicationSection section)
     {
         return RedirectToAction(nameof(Details), new { id, section });
-    }
-
-    private IActionResult ToModalResult(ServiceResult result, string partialViewName, object model)
-    {
-        if (result.Succeeded)
-            return this.ModalSuccess();
-
-        ModelState.AddModelError(string.Empty, result.Error!);
-        return this.ModalInvalid(partialViewName, model);
-    }
-
-    private DeleteConfirmViewModel RemoveResidenceConfirmation(RentalApplication application, int residenceId, Guid sectionVersion)
-    {
-        var residence = application.Residences.SingleOrDefault(r => r.Id == residenceId);
-        var message = residence is null
-            ? "Remove this residence?"
-            : $"Remove {residence.Address} from your residence history?";
-
-        return new DeleteConfirmViewModel
-        {
-            Title = "Remove residence",
-            Message = message,
-            PostUrl = Url.Action(nameof(DeleteResidence), new { id = residenceId })!,
-            HiddenFields = new Dictionary<string, string>
-            {
-                [nameof(ApplicationPageViewModel.ResidenceSectionVersion)] = sectionVersion.ToString()
-            }
-        };
     }
 
     private DeleteConfirmViewModel WithdrawConfirmation(int id)

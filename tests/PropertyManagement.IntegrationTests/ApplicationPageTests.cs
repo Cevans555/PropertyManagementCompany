@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Net;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
@@ -176,7 +176,7 @@ public partial class ApplicationPageTests
 
         var added = await AddResidenceAsync(client, applicationId);
         Assert.Equal(HttpStatusCode.OK, added.StatusCode);
-        Assert.Contains("Bob Landlord", await client.GetStringAsync($"/Applications/ResidenceList/{applicationId}"));
+        Assert.Contains("Bob Landlord", await client.GetStringAsync($"/ApplicationResidences/List/{applicationId}"));
 
         var residencesSaved = await PostCommandAsync(client, applicationId, "Residences", ApplicationCommandValues.Continue);
         Assert.Equal(HttpStatusCode.Redirect, residencesSaved.StatusCode);
@@ -247,7 +247,7 @@ public partial class ApplicationPageTests
         await AddResidenceAsync(client, applicationId);
         await PostCommandAsync(client, applicationId, "Residences", ApplicationCommandValues.Continue);
 
-        var addUrl = $"/Applications/AddCoApplicant?applicationId={applicationId}";
+        var addUrl = $"/ApplicationApplicants/Add?applicationId={applicationId}";
         var added = await client.PostFormAsync(addUrl, addUrl, new() { ["Email"] = TestAccounts.OtherApplicant });
         Assert.Equal(HttpStatusCode.OK, added.StatusCode);
 
@@ -268,7 +268,7 @@ public partial class ApplicationPageTests
     public async Task AddCoApplicant_WithUnknownEmail_Returns422()
     {
         var (client, applicationId) = await StartApplicationAsync();
-        var addUrl = $"/Applications/AddCoApplicant?applicationId={applicationId}";
+        var addUrl = $"/ApplicationApplicants/Add?applicationId={applicationId}";
 
         var response = await client.PostFormAsync(addUrl, addUrl, new() { ["Email"] = "nobody@example.com" });
 
@@ -292,7 +292,7 @@ public partial class ApplicationPageTests
     public async Task ConcurrentSavesToDifferentSections_BothSucceed()
     {
         var (client, applicationId) = await StartApplicationAsync();
-        var addUrl = $"/Applications/AddCoApplicant?applicationId={applicationId}";
+        var addUrl = $"/ApplicationApplicants/Add?applicationId={applicationId}";
         Assert.Equal(
             HttpStatusCode.OK,
             (await client.PostFormAsync(addUrl, addUrl, new() { ["Email"] = TestAccounts.OtherApplicant })).StatusCode);
@@ -370,7 +370,7 @@ public partial class ApplicationPageTests
 
     private static async Task<HttpResponseMessage> AddResidenceAsync(HttpClient client, int applicationId)
     {
-        var url = $"/Applications/CreateResidence?applicationId={applicationId}";
+        var url = $"/ApplicationResidences/Create?applicationId={applicationId}";
         var html = await client.GetStringAsync(url);
         return await client.PostFormWithTokenAsync(html, url, new()
         {

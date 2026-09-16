@@ -1,6 +1,6 @@
 @model CoApplicantFormViewModel
 
-<form method="post" action="@Url.Action("AddCoApplicant", new { applicationId = Model.ApplicationId })" asp-antiforgery="true">
+<form method="post" action="@Url.Action("Add", "ApplicationApplicants", new { applicationId = Model.ApplicationId })" asp-antiforgery="true">
     <div class="modal-header">
         <h2 class="modal-title fs-5">Add co-applicant</h2>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>

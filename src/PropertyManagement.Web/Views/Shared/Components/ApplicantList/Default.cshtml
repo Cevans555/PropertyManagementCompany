@@ -27,7 +27,7 @@
 @if (Model.Editable)
 {
     <button type="button" class="btn btn-sm btn-outline-primary"
-            data-modal-url="@Url.Action("AddCoApplicant", "Applications", new { applicationId = Model.ApplicationId })"
+            data-modal-url="@Url.Action("Add", "ApplicationApplicants", new { applicationId = Model.ApplicationId })"
             data-modal-refresh="#applicant-list">
         Add co-applicant
     </button>

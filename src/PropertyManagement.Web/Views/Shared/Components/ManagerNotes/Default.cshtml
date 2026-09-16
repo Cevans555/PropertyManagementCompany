@@ -24,12 +24,12 @@ else
                     </div>
                     <div class="text-nowrap">
                         <button type="button" class="btn btn-sm btn-link p-0 me-2"
-                                data-modal-url="@Url.Action("EditNote", "Reviews", new { id = note.Id })"
+                                data-modal-url="@Url.Action("Edit", "ManagerNotes", new { id = note.Id })"
                                 data-modal-refresh="#manager-notes">
                             Edit
                         </button>
                         <button type="button" class="btn btn-sm btn-link text-danger p-0"
-                                data-modal-url="@Url.Action("DeleteNote", "Reviews", new { id = note.Id })"
+                                data-modal-url="@Url.Action("Delete", "ManagerNotes", new { id = note.Id })"
                                 data-modal-refresh="#manager-notes">
                             Remove
                         </button>

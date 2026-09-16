@@ -104,7 +104,7 @@
 @if (!forceReadOnly)
 {
     <h3 class="h6 mt-4">People on this application</h3>
-    <div id="applicant-list" data-refresh-url="@Url.Action("ApplicantList", new { id = Model.Id })">
+    <div id="applicant-list" data-refresh-url="@Url.Action("List", "ApplicationApplicants", new { id = Model.Id })">
         @await Component.InvokeAsync("ApplicantList", new { applicationId = Model.Id, editable })
     </div>
 }

@@ -2,8 +2,8 @@
 @{
     var isNew = Model.Id is null;
     var postUrl = isNew
-        ? Url.Action("AddNote", "Reviews", new { applicationId = Model.ApplicationId })
-        : Url.Action("EditNote", "Reviews", new { id = Model.Id });
+        ? Url.Action("Add", "ManagerNotes", new { applicationId = Model.ApplicationId })
+        : Url.Action("Edit", "ManagerNotes", new { id = Model.Id });
 }
 
 <form method="post" action="@postUrl" asp-antiforgery="true">
