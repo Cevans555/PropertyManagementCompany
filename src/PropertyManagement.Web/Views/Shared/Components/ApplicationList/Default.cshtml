@@ -1,0 +1,61 @@
+@model ApplicationListViewModel
+@using System.Globalization
+@{
+    var usd = CultureInfo.GetCultureInfo("en-US");
+}
+
+@if (Model.Rows.Count == 0)
+{
+    <div class="text-center text-muted border rounded py-5">No applications match these filters.</div>
+}
+else
+{
+    <p class="small text-muted">@Model.Rows.Count application(s)</p>
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th scope="col">Unit</th>
+                    <th scope="col">Applicants</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Submitted</th>
+                    @if (Model.IsManager)
+                    {
+                        <th scope="col">Claimed by</th>
+                    }
+                    <th scope="col"><span class="visually-hidden">Actions</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model.Rows)
+                {
+                    <tr>
+                        <td>
+                            @row.PropertyName
+                            <div class="small text-muted">Unit @row.UnitNumber</div>
+                        </td>
+                        <td>@row.Applicants</td>
+                        <td><partial name="_StatusBadge" model="row.Status" /></td>
+                        <td>
+                            @if (row.SubmittedAt is { } submittedAt)
+                            {
+                                @submittedAt.ToString("MMM d, yyyy", usd)
+                            }
+                            else
+                            {
+                                <span class="text-muted">Not submitted</span>
+                            }
+                        </td>
+                        @if (Model.IsManager)
+                        {
+                            <td>@(row.ClaimedBy ?? "-")</td>
+                        }
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Details", "Applications", new { id = row.Id })">Open</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
