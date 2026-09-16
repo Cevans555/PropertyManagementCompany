@@ -23,8 +23,10 @@ public static class StatusBadges
                 return "status-badge status-approved";
             case ApplicationStatus.Denied:
                 return "status-badge status-denied";
-            default:
+            case ApplicationStatus.Withdrawn:
                 return "status-badge status-withdrawn";
+            default:
+                return "status-badge";
         }
     }
 }
