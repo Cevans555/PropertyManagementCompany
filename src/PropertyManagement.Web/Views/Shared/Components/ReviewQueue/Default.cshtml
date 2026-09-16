@@ -9,7 +9,7 @@
     <h2 id="waiting-heading" class="h5">Waiting for review <span class="badge text-bg-secondary">@Model.Waiting.Count</span></h2>
     @if (Model.Waiting.Count == 0)
     {
-        <p class="text-muted">No submitted applications are waiting.</p>
+        <p class="empty-state empty-state-sm">No submitted applications are waiting.</p>
     }
     else
     {
@@ -48,7 +48,7 @@
     <h2 id="mine-heading" class="h5">My reviews <span class="badge text-bg-primary">@Model.MyClaims.Count</span></h2>
     @if (Model.MyClaims.Count == 0)
     {
-        <p class="text-muted">You haven't claimed any applications.</p>
+        <p class="empty-state empty-state-sm">You haven't claimed any applications.</p>
     }
     else
     {
@@ -87,7 +87,7 @@
     <h2 id="others-heading" class="h5">Being reviewed by others <span class="badge text-bg-light border">@Model.OtherClaims.Count</span></h2>
     @if (Model.OtherClaims.Count == 0)
     {
-        <p class="text-muted">No applications are claimed by other managers.</p>
+        <p class="empty-state empty-state-sm">No applications are claimed by other managers.</p>
     }
     else
     {

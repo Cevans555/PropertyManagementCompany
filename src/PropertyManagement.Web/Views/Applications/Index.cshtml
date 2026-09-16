@@ -3,11 +3,20 @@
     ViewData["Title"] = Model.IsManager ? "Applications" : "My applications";
 }
 
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <h1 class="h3 mb-0">@ViewData["Title"]</h1>
+<div class="page-header">
+    <div>
+        <h1>@ViewData["Title"]</h1>
+        <p class="page-subtitle">
+            @(Model.IsManager
+                ? "Every application, filtered and paged in the database."
+                : "Applications you are named on, including ones a co-applicant started.")
+        </p>
+    </div>
     @if (!Model.IsManager)
     {
-        <a class="btn btn-outline-primary" asp-action="Available">Browse available units</a>
+        <div class="page-actions">
+            <a class="btn btn-outline-primary" asp-action="Available">Browse available units</a>
+        </div>
     }
 </div>
 

@@ -1,8 +1,163 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@model HomePageViewModel
+@{
+    ViewData["Title"] = "Home";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+@if (!Model.IsAuthenticated)
+{
+    <div class="page-header">
+        <div>
+            <h1>Rental applications, start to finish</h1>
+            <p class="page-subtitle">
+                Applicants browse available units and apply. Property managers keep properties and units up to date,
+                then review each application and issue a lease when they approve one.
+            </p>
+        </div>
+        <div class="page-actions">
+            <a class="btn btn-primary" asp-controller="Account" asp-action="Register">Create an account</a>
+            <a class="btn btn-outline-primary" asp-controller="Account" asp-action="Login">Log in</a>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">As an applicant</div>
+                <div class="card-body">
+                    <p class="card-text text-muted mb-0">
+                        Browse units with no current lease, then work through one application at a time: your details,
+                        where you have lived, and a summary to check before submitting. You can add a co-applicant,
+                        and withdraw an application while it is still open.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">As a property manager</div>
+                <div class="card-body">
+                    <p class="card-text text-muted mb-0">
+                        Maintain properties and their units, claim a submitted application so no one reviews it twice,
+                        then approve, return or deny it. Approving issues a twelve-month lease and makes the unit
+                        unavailable.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-header">Demo sign-ins</div>
+        <div class="card-body">
+            <p class="card-text text-muted mb-2">
+                The database is seeded on start-up, so these accounts already exist. Every account uses the password
+                <code>Password123!</code>.
+            </p>
+            <ul class="mb-0 text-muted">
+                <li><code>manager1@@demo.com</code> &mdash; property manager</li>
+                <li><code>applicant1@@demo.com</code> &mdash; applicant</li>
+            </ul>
+        </div>
+    </div>
+}
+else if (Model.IsManager)
+{
+    <div class="page-header">
+        <div>
+            <h1>Welcome back</h1>
+            <p class="page-subtitle">@Model.DisplayName &middot; property manager</p>
+        </div>
+        <div class="page-actions">
+            <a class="btn btn-primary" asp-controller="Reviews" asp-action="Queue">Go to review queue</a>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="display-6">@Model.WaitingToReview</div>
+                    <div class="text-muted">Waiting to be claimed</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="display-6">@Model.ClaimedByMe</div>
+                    <div class="text-muted">Claimed by you</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="display-6">@Model.PropertyCount</div>
+                    <div class="text-muted">Properties</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="display-6">@Model.AvailableUnitCount</div>
+                    <div class="text-muted">Units available today</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-outline-primary" asp-controller="Applications" asp-action="Index">All applications</a>
+        <a class="btn btn-outline-primary" asp-controller="Properties" asp-action="Index">Properties and units</a>
+    </div>
+}
+else
+{
+    <div class="page-header">
+        <div>
+            <h1>Welcome back</h1>
+            <p class="page-subtitle">@Model.DisplayName &middot; applicant</p>
+        </div>
+        <div class="page-actions">
+            <a class="btn btn-primary" asp-controller="Applications" asp-action="Available">Browse available units</a>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="display-6">@Model.NeedsAttention</div>
+                    <div class="text-muted">Need your attention</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="display-6">@Model.AwaitingDecision</div>
+                    <div class="text-muted">Waiting on a decision</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="display-6">@Model.Approved</div>
+                    <div class="text-muted">Approved</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.NeedsAttention > 0)
+    {
+        <div class="alert alert-secondary" role="status">
+            You have an application that is still a draft or was returned for changes.
+            <a asp-controller="Applications" asp-action="Index">Open my applications</a> to finish it.
+        </div>
+    }
+
+    <a class="btn btn-outline-primary" asp-controller="Applications" asp-action="Index">My applications</a>
+}
