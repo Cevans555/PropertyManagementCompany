@@ -1,11 +1,3 @@
-// Reusable data grid, rendered by the Grid view component:
-//   <div data-grid data-grid-url="/api/applications" data-grid-columns='[...]' data-grid-filter-form="filters">
-//
-// The endpoint receives page, pageSize, sort and direction plus the filter form's fields, and returns
-//   { items: [...], totalCount, page, pageSize }
-//
-// Grid state lives in the page URL (?status=Draft&sort=status&direction=asc&page=2), so a refresh or a shared link
-// shows the same page, and Back/Forward step through earlier states. Cell text is always set with textContent.
 (() => {
     const dateFormat = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
@@ -127,7 +119,6 @@
             }
             if (requestId !== latestRequest) return;
 
-            // The server clamps a page past the end; keep the URL in step with what's shown.
             if (data.page !== state.page) {
                 state = { ...state, page: data.page };
                 const query = toParams(state, false).toString();

@@ -1,8 +1,4 @@
 @using PropertyManagement.Web.Controllers
-@*
-    One-off messages carried across a redirect. Rendered once in the layout so every page shows them the same way,
-    rather than each view repeating the three TempData checks.
-*@
 @if (TempData[ApplicationsController.StatusMessageKey] is string statusMessage)
 {
     <div class="alert alert-success" role="status">@statusMessage</div>

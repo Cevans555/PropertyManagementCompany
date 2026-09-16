@@ -47,10 +47,6 @@ public sealed class ApplicationPageBuilder
         return result.Succeeded;
     }
 
-    /// <summary>
-    /// Loads an application and checks the user may perform <paramref name="operation"/> on it. An application the
-    /// user can't even view comes back as not found rather than forbidden, so its existence isn't disclosed.
-    /// </summary>
     public async Task<ApplicationAccess> AuthorizeAsync(
         ClaimsPrincipal user,
         int applicationId,

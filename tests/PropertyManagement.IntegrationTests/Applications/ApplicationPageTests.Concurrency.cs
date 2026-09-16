@@ -5,8 +5,6 @@ using PropertyManagement.IntegrationTests.Infrastructure;
 
 namespace PropertyManagement.IntegrationTests;
 
-// Bonus 5: two applicants editing one application at the same time. Saves to different sections must both
-// succeed, and a second save to the same section is refused as stale instead of overwriting silently.
 public partial class ApplicationPageTests
 {
     [Fact]

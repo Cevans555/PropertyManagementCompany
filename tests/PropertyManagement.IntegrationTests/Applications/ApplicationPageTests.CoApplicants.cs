@@ -5,8 +5,6 @@ using PropertyManagement.IntegrationTests.Infrastructure;
 
 namespace PropertyManagement.IntegrationTests;
 
-// Bonus 5: more than one applicant on an application. Any of them can view and edit it, and every one of
-// them has to save their own applicant information before the application can be submitted.
 public partial class ApplicationPageTests
 {
     [Fact]

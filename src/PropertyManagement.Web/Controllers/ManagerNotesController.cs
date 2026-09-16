@@ -10,11 +10,6 @@ using PropertyManagement.Web.Services;
 
 namespace PropertyManagement.Web.Controllers;
 
-/// <summary>
-/// Manager notes on an application. A note is its own aggregate rather than part of the application, so it has
-/// its own controller and service. Every endpoint is behind the manager policy and the ManageNotes check, so a
-/// note is never rendered or returned to an applicant.
-/// </summary>
 [Authorize(Policy = Policies.PropertyManager)]
 public class ManagerNotesController : Controller
 {
