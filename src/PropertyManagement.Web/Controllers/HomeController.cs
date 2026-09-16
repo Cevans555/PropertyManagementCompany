@@ -1,9 +1,12 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PropertyManagement.Web.Models;
 using System.Diagnostics;
 
 namespace PropertyManagement.Web.Controllers
 {
+    // The fallback policy requires a signed-in user everywhere, so the public pages opt out.
+    [AllowAnonymous]
     public class HomeController : Controller
     {
         public IActionResult Index()
