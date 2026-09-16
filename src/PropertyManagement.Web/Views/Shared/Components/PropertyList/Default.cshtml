@@ -1,0 +1,45 @@
+@model IReadOnlyList<PropertyListItemViewModel>
+
+@if (Model.Count == 0)
+{
+    <div class="text-center text-muted border rounded py-5">No properties yet. Add one to get started.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th scope="col">Property</th>
+                    <th scope="col">Address</th>
+                    <th scope="col" class="text-end">Units</th>
+                    <th scope="col" class="text-end">Available today</th>
+                    <th scope="col"><span class="visually-hidden">Actions</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var property in Model)
+                {
+                    <tr>
+                        <td><a asp-controller="Properties" asp-action="Details" asp-route-id="@property.Id">@property.Name</a></td>
+                        <td>@property.Street, @property.City, @property.State @property.PostalCode</td>
+                        <td class="text-end">@property.UnitCount</td>
+                        <td class="text-end">@property.AvailableUnitCount</td>
+                        <td class="text-end text-nowrap">
+                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                    data-modal-url="@Url.Action("Edit", "Properties", new { id = property.Id })"
+                                    data-modal-refresh="#property-list">
+                                Edit
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                    data-modal-url="@Url.Action("Delete", "Properties", new { id = property.Id })"
+                                    data-modal-refresh="#property-list">
+                                Remove
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

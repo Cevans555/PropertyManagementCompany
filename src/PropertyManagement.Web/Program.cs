@@ -25,10 +25,14 @@ builder.Services.AddScoped<LeaseQueries>();
 builder.Services.AddScoped<ApplicationUpdater>();
 builder.Services.AddScoped<RentalApplicationService>();
 builder.Services.AddScoped<ApplicationReviewService>();
+builder.Services.AddScoped<PropertyService>();
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<PropertyManagementDbContext>((services, options) =>
 {
+    // Read when the context is created, so integration tests can point the app at their own database.
+    var connectionString = services.GetRequiredService<IConfiguration>().GetConnectionString("DefaultConnection")
+        ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
     options.UseSqlServer(connectionString, sql => sql.MigrationsAssembly("PropertyManagement.Data"));
     options.AddInterceptors(services.GetRequiredService<AuditSaveChangesInterceptor>());
 });
