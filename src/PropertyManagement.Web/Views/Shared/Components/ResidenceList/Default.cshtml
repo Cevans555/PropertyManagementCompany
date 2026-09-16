@@ -1,0 +1,63 @@
+@model ResidenceListViewModel
+@using System.Globalization
+@{
+    var usd = CultureInfo.GetCultureInfo("en-US");
+}
+
+@if (Model.Editable)
+{
+    <input type="hidden" name="ResidenceSectionVersion" value="@Model.SectionVersion" />
+}
+
+@if (Model.Residences.Count == 0)
+{
+    <div class="text-center text-muted border rounded py-4">No residences added yet.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th scope="col">Address</th>
+                    <th scope="col">Landlord</th>
+                    <th scope="col">Dates</th>
+                    @if (Model.Editable)
+                    {
+                        <th scope="col"><span class="visually-hidden">Actions</span></th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var residence in Model.Residences)
+                {
+                    <tr>
+                        <td>@residence.Address</td>
+                        <td>
+                            @residence.LandlordName
+                            <div class="small text-muted">@residence.LandlordPhone</div>
+                        </td>
+                        <td class="text-nowrap">
+                            @residence.MoveInDate.ToString("MMM yyyy", usd) &ndash; @residence.MoveOutDate.ToString("MMM yyyy", usd)
+                        </td>
+                        @if (Model.Editable)
+                        {
+                            <td class="text-end text-nowrap">
+                                <button type="button" class="btn btn-sm btn-outline-secondary"
+                                        data-modal-url="@Url.Action("EditResidence", "Applications", new { id = residence.Id })"
+                                        data-modal-refresh="#residence-list">
+                                    Edit
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                        data-modal-url="@Url.Action("DeleteResidence", "Applications", new { id = residence.Id })"
+                                        data-modal-refresh="#residence-list">
+                                    Remove
+                                </button>
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

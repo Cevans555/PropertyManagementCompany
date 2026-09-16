@@ -1,0 +1,14 @@
+@model ApplicationPageViewModel
+
+@switch (Model.Section)
+{
+    case ApplicationSection.Residences:
+        <partial name="_ResidenceSection" model="Model" />
+        break;
+    case ApplicationSection.Summary:
+        <partial name="_SummarySection" model="Model" />
+        break;
+    default:
+        <partial name="_ApplicantSection" model="Model" />
+        break;
+}

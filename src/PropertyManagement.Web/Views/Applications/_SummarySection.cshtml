@@ -1,0 +1,42 @@
+@model ApplicationPageViewModel
+@{
+    var readOnly = new ViewDataDictionary(ViewData) { ["ReadOnly"] = true };
+}
+
+@if (Model.CanEdit)
+{
+    if (Model.SubmitBlockers.Count > 0)
+    {
+        <div class="alert alert-warning" role="status">
+            <strong>Before you can submit:</strong>
+            <ul class="mb-0">
+                @foreach (var blocker in Model.SubmitBlockers)
+                {
+                    <li>
+                        @blocker.Message
+                        @if (blocker.FixSection is { } fixSection)
+                        {
+                            <a class="ms-1" asp-action="Details" asp-route-id="@Model.Id" asp-route-section="@fixSection">Fix</a>
+                        }
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info" role="status">Everything is saved. Review your application, then submit it.</div>
+    }
+}
+
+<partial name="_ApplicantSection" model="Model" view-data="readOnly" />
+
+<hr class="my-4" />
+
+<partial name="_ResidenceSection" model="Model" view-data="readOnly" />
+
+@if (Model.CanSeeStatusHistory)
+{
+    <hr class="my-4" />
+    <partial name="_StatusHistory" model="Model.StatusHistory" />
+}

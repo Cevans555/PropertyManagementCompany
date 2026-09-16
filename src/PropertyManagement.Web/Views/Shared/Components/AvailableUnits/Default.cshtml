@@ -1,0 +1,57 @@
+@model IReadOnlyList<AvailableUnitViewModel>
+@using System.Globalization
+@{
+    var usd = CultureInfo.GetCultureInfo("en-US");
+}
+
+@if (Model.Count == 0)
+{
+    <div class="text-center text-muted border rounded py-5">No units are available right now. Check back soon.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th scope="col">Property</th>
+                    <th scope="col">Unit</th>
+                    <th scope="col">Type</th>
+                    <th scope="col" class="text-end">Bedrooms</th>
+                    <th scope="col" class="text-end">Monthly rent</th>
+                    <th scope="col"><span class="visually-hidden">Actions</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var unit in Model)
+                {
+                    <tr>
+                        <td>
+                            @unit.PropertyName
+                            <div class="small text-muted">@unit.City, @unit.State</div>
+                        </td>
+                        <td class="fw-semibold">@unit.UnitNumber</td>
+                        <td>@unit.UnitTypeName</td>
+                        <td class="text-end">@unit.Bedrooms</td>
+                        <td class="text-end">@unit.MonthlyRent.ToString("C0", usd)</td>
+                        <td class="text-end text-nowrap">
+                            @if (unit.OpenApplicationId is { } applicationId)
+                            {
+                                <a class="btn btn-sm btn-outline-primary" asp-controller="Applications" asp-action="Details" asp-route-id="@applicationId">
+                                    Continue application
+                                </a>
+                            }
+                            else
+                            {
+                                <form asp-controller="Applications" asp-action="Start" method="post" class="d-inline">
+                                    <input type="hidden" name="unitId" value="@unit.UnitId" />
+                                    <button type="submit" class="btn btn-sm btn-primary">Apply</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

@@ -1,0 +1,31 @@
+@model IReadOnlyList<StatusHistoryRowViewModel>
+@using System.Globalization
+@{
+    var usd = CultureInfo.GetCultureInfo("en-US");
+}
+
+<section aria-labelledby="history-heading">
+    <h2 id="history-heading" class="h5 mb-3">Status history</h2>
+    <ol class="list-group">
+        @foreach (var row in Model)
+        {
+            <li class="list-group-item">
+                <div class="d-flex flex-wrap justify-content-between gap-2">
+                    <strong>
+                        @if (row.FromStatus is { } from)
+                        {
+                            @from.DisplayName()<span aria-hidden="true"> &rarr; </span><span class="visually-hidden"> to </span>
+                        }
+                        @row.ToStatus.DisplayName()
+                    </strong>
+                    <small class="text-muted">@row.ChangedAt.ToString("MMM d, yyyy h:mm tt", usd) UTC</small>
+                </div>
+                <div class="small text-muted">by @row.ChangedBy</div>
+                @if (!string.IsNullOrWhiteSpace(row.Comment))
+                {
+                    <div class="mt-1">@row.Comment</div>
+                }
+            </li>
+        }
+    </ol>
+</section>

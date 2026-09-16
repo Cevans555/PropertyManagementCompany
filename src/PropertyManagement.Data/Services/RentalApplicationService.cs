@@ -1,6 +1,9 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PropertyManagement.Core.Common;
+using PropertyManagement.Core.Dtos;
 using PropertyManagement.Core.Entities;
+using PropertyManagement.Core.Security;
+using PropertyManagement.Core.ValueObjects;
 using PropertyManagement.Data.Queries;
 
 namespace PropertyManagement.Data.Services;
@@ -8,6 +11,7 @@ namespace PropertyManagement.Data.Services;
 public sealed class RentalApplicationService
 {
     public const string UnitNotFoundMessage = "Unit not found.";
+    public const string NoApplicantAccountMessage = "No applicant account uses that email address.";
 
     private readonly PropertyManagementDbContext _db;
     private readonly ApplicationUpdater _updater;
@@ -61,5 +65,99 @@ public sealed class RentalApplicationService
     public Task<ServiceResult> WithdrawAsync(int applicationId, string applicantUserId, CancellationToken cancellationToken = default)
     {
         return _updater.ApplyAsync(applicationId, (application, now) => application.Withdraw(applicantUserId, now), cancellationToken);
+    }
+
+    public Task<ServiceResult> SaveApplicantDetailsAsync(
+        int applicationId, string applicantUserId, ApplicantDetails details, byte[] expectedRowVersion,
+        CancellationToken cancellationToken = default)
+    {
+        return _updater.ApplyAsync(applicationId, (application, now) =>
+        {
+            var applicant = application.Applicants.SingleOrDefault(a => a.UserId == applicantUserId);
+            if (applicant is not null && !applicant.RowVersion.AsSpan().SequenceEqual(expectedRowVersion))
+                throw new StaleDataException();
+
+            application.SaveApplicantDetails(applicantUserId, applicantUserId, details, now);
+        }, cancellationToken);
+    }
+
+    public Task<ServiceResult> AddResidenceAsync(
+        int applicationId, string applicantUserId, ResidenceInput input, Guid expectedSectionVersion,
+        CancellationToken cancellationToken = default)
+    {
+        return _updater.ApplyAsync(applicationId, (application, _) =>
+        {
+            EnsureResidenceSectionVersion(application, expectedSectionVersion);
+            application.AddResidence(applicantUserId, ToResidenceDetails(input));
+        }, cancellationToken);
+    }
+
+    public Task<ServiceResult> UpdateResidenceAsync(
+        int applicationId, string applicantUserId, int residenceId, ResidenceInput input, Guid expectedSectionVersion,
+        CancellationToken cancellationToken = default)
+    {
+        return _updater.ApplyAsync(applicationId, (application, _) =>
+        {
+            EnsureResidenceSectionVersion(application, expectedSectionVersion);
+            application.UpdateResidence(applicantUserId, residenceId, ToResidenceDetails(input));
+        }, cancellationToken);
+    }
+
+    public Task<ServiceResult> RemoveResidenceAsync(
+        int applicationId, string applicantUserId, int residenceId, Guid expectedSectionVersion,
+        CancellationToken cancellationToken = default)
+    {
+        return _updater.ApplyAsync(applicationId, (application, _) =>
+        {
+            EnsureResidenceSectionVersion(application, expectedSectionVersion);
+            application.RemoveResidence(applicantUserId, residenceId);
+        }, cancellationToken);
+    }
+
+    public Task<ServiceResult> SaveResidenceSectionAsync(
+        int applicationId, string applicantUserId, Guid expectedSectionVersion, CancellationToken cancellationToken = default)
+    {
+        return _updater.ApplyAsync(applicationId, (application, now) =>
+        {
+            EnsureResidenceSectionVersion(application, expectedSectionVersion);
+            application.SaveResidenceSection(applicantUserId, now);
+        }, cancellationToken);
+    }
+
+    public async Task<ServiceResult> AddCoApplicantAsync(
+        int applicationId, string actingUserId, string email, CancellationToken cancellationToken = default)
+    {
+        var normalizedEmail = email.Trim().ToUpperInvariant();
+        var coApplicantId = await (
+                from user in _db.Users
+                join userRole in _db.UserRoles on user.Id equals userRole.UserId
+                join role in _db.Roles on userRole.RoleId equals role.Id
+                where user.NormalizedEmail == normalizedEmail && role.Name == Roles.Applicant
+                select user.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (coApplicantId is null)
+            return ServiceResult.Failure(NoApplicantAccountMessage);
+
+        return await _updater.ApplyAsync(
+            applicationId, (application, _) => application.AddApplicant(actingUserId, coApplicantId), cancellationToken);
+    }
+
+    private static void EnsureResidenceSectionVersion(RentalApplication application, Guid expected)
+    {
+        if (application.ResidenceSectionVersion != expected)
+            throw new StaleDataException();
+    }
+
+    private static ResidenceDetails ToResidenceDetails(ResidenceInput input)
+    {
+        return new ResidenceDetails
+        {
+            Address = new Address(input.Street, input.City, input.State, input.PostalCode),
+            LandlordName = input.LandlordName,
+            LandlordPhone = input.LandlordPhone,
+            MoveInDate = input.MoveInDate,
+            MoveOutDate = input.MoveOutDate
+        };
     }
 }
