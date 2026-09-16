@@ -4,7 +4,7 @@ A web application for submitting and reviewing rental applications.
 Built with ASP.NET Core MVC and Razor on .NET 10, using ASP.NET Identity, SQL Server and Entity Framework Core.
 
 ## This is the `extras` branch
-`main` is the assessment submission: the specification plus all five bonuses. This branch builds on it with improvements and edge cases that go beyond the specification. It is never merged into `main`, so the submission stays exactly as reviewed.
+`main` is the assessment submission: the specification plus all five bonuses. This branch builds on it with improvements and edge cases that go beyond the specification. It is kept out of `main`, so `main` remains the submitted assessment.
 
 It uses its own database, `PropertyManagementCompany_Extras`, so schema changes made here can't clash with a database created from `main`.
 
