@@ -5,10 +5,11 @@
     var usd = CultureInfo.GetCultureInfo("en-US");
     var sections = new[]
     {
-        (Section: ApplicationSection.Applicant, Label: "1. Applicant information"),
-        (Section: ApplicationSection.Residences, Label: "2. Residence history"),
-        (Section: ApplicationSection.Summary, Label: "3. Summary")
+        (Section: ApplicationSection.Applicant, Label: "Applicant information"),
+        (Section: ApplicationSection.Residences, Label: "Residence history"),
+        (Section: ApplicationSection.Summary, Label: "Summary")
     };
+    var currentIndex = Array.FindIndex(sections, s => s.Section == Model.Section);
     var pageErrors = ViewData.ModelState[string.Empty]?.Errors;
 }
 
@@ -54,19 +55,20 @@
     </div>
 }
 
-<nav aria-label="Application sections" class="mb-4">
-    <ol class="nav nav-pills section-rail">
-        @foreach (var step in sections)
+<nav aria-label="Application sections">
+    <ol class="section-steps">
+        @for (var i = 0; i < sections.Length; i++)
         {
-            var isCurrent = step.Section == Model.Section;
-            <li class="nav-item">
+            var step = sections[i];
+            var state = i == currentIndex ? "is-current" : i < currentIndex ? "is-done" : null;
+            <li class="@state">
                 @if (Model.CanEdit)
                 {
-                    <span class="nav-link @(isCurrent ? "active" : "disabled")" aria-current="@(isCurrent ? "step" : null)">@step.Label</span>
+                    <span class="step-link" aria-current="@(state == "is-current" ? "step" : null)">@step.Label</span>
                 }
                 else
                 {
-                    <a class="nav-link @(isCurrent ? "active" : null)" aria-current="@(isCurrent ? "step" : null)"
+                    <a class="step-link" aria-current="@(state == "is-current" ? "step" : null)"
                        asp-action="Details" asp-route-id="@Model.Id" asp-route-section="@step.Section">@step.Label</a>
                 }
             </li>
@@ -85,10 +87,10 @@
             </div>
         </div>
 
-        <div class="d-flex gap-2">
+        <div class="form-actions">
             @if (Model.Section == ApplicationSection.Summary)
             {
-                <button type="submit" name="command" value="@ApplicationCommands.Submit" class="btn btn-success ms-auto"
+                <button type="submit" name="command" value="@ApplicationCommands.Submit" class="btn btn-primary btn-lg px-4 ms-auto"
                         disabled="@(Model.SubmitBlockers.Count > 0)">
                     Submit application
                 </button>
@@ -115,7 +117,7 @@ else
         </div>
     </div>
 
-    <div class="d-flex gap-2">
+    <div class="form-actions">
         @if (Model.Section != ApplicationSection.Applicant)
         {
             <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.Id" asp-route-section="@Model.Section.Previous()">Back</a>

@@ -12,19 +12,19 @@ public static class StatusBadges
         switch (status)
         {
             case ApplicationStatus.Draft:
-                return "text-bg-secondary";
+                return "status-badge status-draft";
             case ApplicationStatus.Submitted:
-                return "text-bg-primary";
+                return "status-badge status-submitted";
             case ApplicationStatus.UnderReview:
-                return "text-bg-info";
+                return "status-badge status-under-review";
             case ApplicationStatus.Returned:
-                return "text-bg-warning";
+                return "status-badge status-returned";
             case ApplicationStatus.Approved:
-                return "text-bg-success";
+                return "status-badge status-approved";
             case ApplicationStatus.Denied:
-                return "text-bg-danger";
+                return "status-badge status-denied";
             default:
-                return "text-bg-light border";
+                return "status-badge status-withdrawn";
         }
     }
 }
