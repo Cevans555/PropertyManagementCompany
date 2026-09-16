@@ -2,67 +2,80 @@
 @using PropertyManagement.Core.Security
 @{
     ViewData["Title"] = "Create an account";
+
+    // The home page's role cards link here with ?role=..., which only preselects the radio button.
+    var requestedRole = Context.Request.Query["role"].ToString();
+    if (string.IsNullOrEmpty(Model.Role) && Roles.All.Contains(requestedRole))
+    {
+        Model.Role = requestedRole;
+    }
 }
 
-<div class="row justify-content-center">
-    <div class="col-md-9 col-lg-7">
-        <div class="card">
-            <div class="card-header">@ViewData["Title"]</div>
-            <div class="card-body">
-                <form asp-action="Register" method="post">
-                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
+<div class="card auth-card auth-card-wide">
+    <div class="card-body">
+        <h1>Create an account</h1>
+        <p class="text-muted mb-4">Choose your role, then enter your details.</p>
 
-                    <fieldset class="mb-3">
-                        <legend class="form-label fs-6 fw-semibold">I am a…</legend>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" asp-for="Role" id="role-applicant" value="@Roles.Applicant" />
-                            <label class="form-check-label" for="role-applicant">Applicant looking for a place to rent</label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" asp-for="Role" id="role-manager" value="@Roles.PropertyManager" />
-                            <label class="form-check-label" for="role-manager">Property manager</label>
-                        </div>
-                        <span asp-validation-for="Role" class="text-danger"></span>
-                    </fieldset>
+        <form asp-action="Register" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
 
-                    <div class="row g-3 mb-3">
-                        <div class="col-sm-6">
-                            <label asp-for="FirstName" class="form-label"></label>
-                            <input asp-for="FirstName" class="form-control" autocomplete="given-name" />
-                            <span asp-validation-for="FirstName" class="text-danger"></span>
-                        </div>
-                        <div class="col-sm-6">
-                            <label asp-for="LastName" class="form-label"></label>
-                            <input asp-for="LastName" class="form-control" autocomplete="family-name" />
-                            <span asp-validation-for="LastName" class="text-danger"></span>
-                        </div>
-                    </div>
+            <fieldset class="mb-4">
+                <legend class="form-label fs-6">I am a…</legend>
+                <div class="choice-group">
+                    <label class="choice-card" for="role-applicant">
+                        <input class="form-check-input" type="radio" asp-for="Role" id="role-applicant" value="@Roles.Applicant" />
+                        <span>
+                            <span class="choice-title">Applicant</span>
+                            <span class="choice-help">Looking for a place to rent</span>
+                        </span>
+                    </label>
+                    <label class="choice-card" for="role-manager">
+                        <input class="form-check-input" type="radio" asp-for="Role" id="role-manager" value="@Roles.PropertyManager" />
+                        <span>
+                            <span class="choice-title">Property manager</span>
+                            <span class="choice-help">Manages units and reviews applications</span>
+                        </span>
+                    </label>
+                </div>
+                <span asp-validation-for="Role" class="text-danger"></span>
+            </fieldset>
 
-                    <div class="mb-3">
-                        <label asp-for="Email" class="form-label"></label>
-                        <input asp-for="Email" class="form-control" autocomplete="username" />
-                        <span asp-validation-for="Email" class="text-danger"></span>
-                    </div>
-
-                    <div class="mb-3">
-                        <label asp-for="Password" class="form-label"></label>
-                        <input asp-for="Password" class="form-control" autocomplete="new-password" />
-                        <div class="form-text">At least 8 characters, with an uppercase letter, a lowercase letter, a number and a symbol.</div>
-                        <span asp-validation-for="Password" class="text-danger"></span>
-                    </div>
-
-                    <div class="mb-4">
-                        <label asp-for="ConfirmPassword" class="form-label"></label>
-                        <input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" />
-                        <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary w-100">Create account</button>
-                </form>
-
-                <p class="mt-3 text-center">Already have an account? <a asp-action="Login">Log in</a></p>
+            <div class="row g-3 mb-3">
+                <div class="col-sm-6">
+                    <label asp-for="FirstName" class="form-label"></label>
+                    <input asp-for="FirstName" class="form-control" autocomplete="given-name" />
+                    <span asp-validation-for="FirstName" class="text-danger"></span>
+                </div>
+                <div class="col-sm-6">
+                    <label asp-for="LastName" class="form-label"></label>
+                    <input asp-for="LastName" class="form-control" autocomplete="family-name" />
+                    <span asp-validation-for="LastName" class="text-danger"></span>
+                </div>
             </div>
-        </div>
+
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" autocomplete="username" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label"></label>
+                <input asp-for="Password" class="form-control" autocomplete="new-password" aria-describedby="password-help" />
+                <div class="form-text" id="password-help">At least 8 characters, with an uppercase letter, a lowercase letter, a number and a symbol.</div>
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+
+            <div class="mb-4">
+                <label asp-for="ConfirmPassword" class="form-label"></label>
+                <input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" />
+                <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Create account</button>
+        </form>
+
+        <p class="mt-4 mb-0 text-center small text-muted">Already have an account? <a asp-action="Login">Log in</a></p>
     </div>
 </div>
 

@@ -22,7 +22,8 @@ public class HomeTests
 
         var html = await client.GetStringAsync("/");
 
-        Assert.Contains("Rental applications, start to finish", html);
+        Assert.Contains("Register as applicant", html);
+        Assert.Contains("Register as manager", html);
         Assert.Contains("Create an account", html);
 
         // Demo credentials live in the README, never in the app, in any environment.
@@ -105,14 +106,14 @@ public class HomeTests
 
     private static void AssertCount(string html, int expected, string label)
     {
-        Assert.Contains($"<div class=\"display-6\">{expected}</div>", html);
+        Assert.Contains($"<div class=\"stat-value\">{expected}</div>", html);
         Assert.Contains(label, html);
     }
 
     private static int AwaitingDecisionCount(string html)
     {
         var match = System.Text.RegularExpressions.Regex.Match(
-            html, "<div class=\"display-6\">(\\d+)</div>\\s*<div class=\"text-muted\">Waiting on a decision</div>");
+            html, "<div class=\"stat-value\">(\\d+)</div>\\s*<div class=\"stat-label\">Waiting on a decision</div>");
         Assert.True(match.Success, "The applicant dashboard did not render a 'Waiting on a decision' count.");
         return int.Parse(match.Groups[1].Value);
     }

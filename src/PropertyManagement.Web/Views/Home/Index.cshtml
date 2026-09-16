@@ -1,48 +1,73 @@
 @model HomePageViewModel
+@using PropertyManagement.Core.Security
 @{
     ViewData["Title"] = "Home";
 }
 
 @if (!Model.IsAuthenticated)
 {
-    <div class="page-header">
-        <div>
-            <h1>Rental applications, start to finish</h1>
-            <p class="page-subtitle">
-                Applicants browse available units and apply. Property managers keep properties and units up to date,
-                then review each application and issue a lease when they approve one.
-            </p>
-        </div>
-        <div class="page-actions">
-            <a class="btn btn-primary" asp-controller="Account" asp-action="Register">Create an account</a>
-            <a class="btn btn-outline-primary" asp-controller="Account" asp-action="Login">Log in</a>
-        </div>
+    <div class="mb-4 pt-md-2">
+        <p class="eyebrow">Rental applications, start to finish</p>
+        <h1 class="fw-bold mb-2">Property Management</h1>
+        <p class="lead text-muted mb-0">A simple and efficient way to manage rental properties, applications, and leases.</p>
+        <hr class="accent-rule" />
     </div>
 
     <div class="row g-3">
         <div class="col-md-6">
-            <div class="card h-100">
-                <div class="card-header">As an applicant</div>
-                <div class="card-body">
-                    <p class="card-text text-muted mb-0">
-                        Browse units with no current lease, then work through one application at a time: your details,
-                        where you have lived, and a summary to check before submitting. You can add a co-applicant,
-                        and withdraw an application while it is still open.
-                    </p>
+            <section class="card h-100" aria-labelledby="applicant-heading">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex gap-3 mb-3">
+                        <span class="icon-disc" aria-hidden="true">A</span>
+                        <div>
+                            <h2 class="h5 fw-semibold mb-1" id="applicant-heading">Applicant</h2>
+                            <p class="text-muted mb-0">Find a unit that's available and apply online, with a co-applicant if you need one.</p>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 mt-auto">
+                        <a class="btn btn-primary" asp-controller="Account" asp-action="Register" asp-route-role="@Roles.Applicant">Register as applicant</a>
+                        <a class="btn btn-outline-primary" asp-controller="Account" asp-action="Login">Log in</a>
+                    </div>
                 </div>
-            </div>
+            </section>
         </div>
         <div class="col-md-6">
-            <div class="card h-100">
-                <div class="card-header">As a property manager</div>
-                <div class="card-body">
-                    <p class="card-text text-muted mb-0">
-                        Maintain properties and their units, claim a submitted application so no one reviews it twice,
-                        then approve, return or deny it. Approving issues a twelve-month lease and makes the unit
-                        unavailable.
-                    </p>
+            <section class="card h-100" aria-labelledby="manager-heading">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex gap-3 mb-3">
+                        <span class="icon-disc" aria-hidden="true">M</span>
+                        <div>
+                            <h2 class="h5 fw-semibold mb-1" id="manager-heading">Property Manager</h2>
+                            <p class="text-muted mb-0">Keep properties and units up to date, review applications, and issue leases.</p>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 mt-auto">
+                        <a class="btn btn-primary" asp-controller="Account" asp-action="Register" asp-route-role="@Roles.PropertyManager">Register as manager</a>
+                        <a class="btn btn-outline-primary" asp-controller="Account" asp-action="Login">Log in</a>
+                    </div>
                 </div>
-            </div>
+            </section>
+        </div>
+    </div>
+
+    <p class="text-muted small mt-3 mb-0">New here? <a asp-controller="Account" asp-action="Register">Create an account</a> and choose your role.</p>
+
+    <div class="row g-4 feature-row">
+        <div class="col-sm-6 col-lg-3">
+            <h2>Browse available units</h2>
+            <p>See every unit without a current lease.</p>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <h2>Complete applications</h2>
+            <p>Your details, residence history, then a summary to submit.</p>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <h2>Review applications</h2>
+            <p>Claim an application so no one reviews it twice.</p>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <h2>Lease approval</h2>
+            <p>Approving issues a 12-month lease for the unit.</p>
         </div>
     </div>
 }
@@ -60,34 +85,34 @@ else if (Model.IsManager)
 
     <div class="row g-3 mb-4">
         <div class="col-6 col-lg-3">
-            <div class="card h-100">
+            <div class="card stat-card stat-card-primary">
                 <div class="card-body">
-                    <div class="display-6">@Model.WaitingToReview</div>
-                    <div class="text-muted">Waiting to be claimed</div>
+                    <div class="stat-value">@Model.WaitingToReview</div>
+                    <div class="stat-label">Waiting to be claimed</div>
                 </div>
             </div>
         </div>
         <div class="col-6 col-lg-3">
-            <div class="card h-100">
+            <div class="card stat-card stat-card-primary">
                 <div class="card-body">
-                    <div class="display-6">@Model.ClaimedByMe</div>
-                    <div class="text-muted">Claimed by you</div>
+                    <div class="stat-value">@Model.ClaimedByMe</div>
+                    <div class="stat-label">Claimed by you</div>
                 </div>
             </div>
         </div>
         <div class="col-6 col-lg-3">
-            <div class="card h-100">
+            <div class="card stat-card">
                 <div class="card-body">
-                    <div class="display-6">@Model.PropertyCount</div>
-                    <div class="text-muted">Properties</div>
+                    <div class="stat-value">@Model.PropertyCount</div>
+                    <div class="stat-label">Properties</div>
                 </div>
             </div>
         </div>
         <div class="col-6 col-lg-3">
-            <div class="card h-100">
+            <div class="card stat-card">
                 <div class="card-body">
-                    <div class="display-6">@Model.AvailableUnitCount</div>
-                    <div class="text-muted">Units available today</div>
+                    <div class="stat-value">@Model.AvailableUnitCount</div>
+                    <div class="stat-label">Units available today</div>
                 </div>
             </div>
         </div>
@@ -111,27 +136,27 @@ else
     </div>
 
     <div class="row g-3 mb-4">
-        <div class="col-6 col-lg-4">
-            <div class="card h-100">
+        <div class="col-sm-4">
+            <div class="card stat-card stat-card-primary">
                 <div class="card-body">
-                    <div class="display-6">@Model.NeedsAttention</div>
-                    <div class="text-muted">Need your attention</div>
+                    <div class="stat-value">@Model.NeedsAttention</div>
+                    <div class="stat-label">Need your attention</div>
                 </div>
             </div>
         </div>
-        <div class="col-6 col-lg-4">
-            <div class="card h-100">
+        <div class="col-sm-4">
+            <div class="card stat-card">
                 <div class="card-body">
-                    <div class="display-6">@Model.AwaitingDecision</div>
-                    <div class="text-muted">Waiting on a decision</div>
+                    <div class="stat-value">@Model.AwaitingDecision</div>
+                    <div class="stat-label">Waiting on a decision</div>
                 </div>
             </div>
         </div>
-        <div class="col-6 col-lg-4">
-            <div class="card h-100">
+        <div class="col-sm-4">
+            <div class="card stat-card">
                 <div class="card-body">
-                    <div class="display-6">@Model.Approved</div>
-                    <div class="text-muted">Approved</div>
+                    <div class="stat-value">@Model.Approved</div>
+                    <div class="stat-label">Approved</div>
                 </div>
             </div>
         </div>
@@ -139,9 +164,9 @@ else
 
     @if (Model.NeedsAttention > 0)
     {
-        <div class="alert alert-secondary" role="status">
+        <div class="alert alert-warning" role="status">
             You have an application that is still a draft or was returned for changes.
-            <a asp-controller="Applications" asp-action="Index">Open my applications</a> to finish it.
+            <a class="alert-link" asp-controller="Applications" asp-action="Index">Open my applications</a> to finish it.
         </div>
     }
 

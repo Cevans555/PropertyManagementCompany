@@ -1,27 +1,27 @@
 @using PropertyManagement.Core.Security
 
-<ul class="navbar-nav align-items-md-center gap-md-2">
+<ul class="navbar-nav align-items-sm-center gap-2">
 @if (User.Identity?.IsAuthenticated == true)
 {
-    <li class="nav-item d-flex align-items-center gap-2 py-2 py-md-0">
-        <span class="d-flex flex-column lh-sm">
+    <li class="nav-item d-flex align-items-center gap-2 py-2 py-sm-0">
+        <span class="d-flex flex-column lh-sm pm-user">
             <span class="small fw-semibold">@User.Identity.Name</span>
-            <span class="small text-muted">@(User.IsInRole(Roles.PropertyManager) ? "Property Manager" : "Applicant")</span>
+            <span class="small pm-user-role">@(User.IsInRole(Roles.PropertyManager) ? "Property Manager" : "Applicant")</span>
         </span>
     </li>
     <li class="nav-item">
         <form class="d-inline" asp-area="" asp-controller="Account" asp-action="Logout" method="post">
-            <button type="submit" class="btn btn-sm btn-outline-secondary">Log out</button>
+            <button type="submit" class="btn btn-sm btn-nav">Log out</button>
         </form>
     </li>
 }
 else
 {
     <li class="nav-item">
-        <a class="nav-link" asp-area="" asp-controller="Account" asp-action="Login">Log in</a>
+        <a class="btn btn-sm btn-nav" asp-area="" asp-controller="Account" asp-action="Login">Log in</a>
     </li>
     <li class="nav-item">
-        <a class="btn btn-sm btn-primary" asp-area="" asp-controller="Account" asp-action="Register">Create an account</a>
+        <a class="btn btn-sm btn-nav-accent" asp-area="" asp-controller="Account" asp-action="Register">Register</a>
     </li>
 }
 </ul>

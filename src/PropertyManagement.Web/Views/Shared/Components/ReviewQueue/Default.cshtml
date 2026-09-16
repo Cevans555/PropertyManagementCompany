@@ -6,7 +6,7 @@
 }
 
 <section class="card mb-4" aria-labelledby="waiting-heading">
-    <div class="card-header" id="waiting-heading">Waiting for review <span class="badge text-bg-secondary">@Model.Waiting.Count</span></div>
+    <h2 class="card-header h6 mb-0" id="waiting-heading">Waiting for review <span class="count-badge count-badge-primary">@Model.Waiting.Count</span></h2>
     <div class="card-body">
     @if (Model.Waiting.Count == 0)
     {
@@ -46,8 +46,8 @@
     </div>
 </section>
 
-<section class="card mb-4" aria-labelledby="mine-heading">
-    <div class="card-header" id="mine-heading">My reviews <span class="badge text-bg-primary">@Model.MyClaims.Count</span></div>
+<section class="card mb-4 stat-card-primary" aria-labelledby="mine-heading">
+    <h2 class="card-header h6 mb-0" id="mine-heading">My reviews <span class="count-badge">@Model.MyClaims.Count</span></h2>
     <div class="card-body">
     @if (Model.MyClaims.Count == 0)
     {
@@ -87,8 +87,8 @@
     </div>
 </section>
 
-<section class="card mb-4" aria-labelledby="others-heading">
-    <div class="card-header" id="others-heading">Being reviewed by others <span class="badge text-bg-light border">@Model.OtherClaims.Count</span></div>
+<section class="card card-muted mb-4" aria-labelledby="others-heading">
+    <h2 class="card-header h6 mb-0" id="others-heading">Being reviewed by others <span class="count-badge">@Model.OtherClaims.Count</span></h2>
     <div class="card-body">
     @if (Model.OtherClaims.Count == 0)
     {
