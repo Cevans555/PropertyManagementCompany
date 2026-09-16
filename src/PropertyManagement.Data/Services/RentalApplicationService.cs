@@ -69,7 +69,7 @@ public sealed class RentalApplicationService
 
     public Task<ServiceResult> SaveApplicantDetailsAsync(
         int applicationId, string applicantUserId, ApplicantDetails details, byte[] expectedRowVersion,
-        CancellationToken cancellationToken = default)
+        bool allowInvalid = false, CancellationToken cancellationToken = default)
     {
         return _updater.ApplyAsync(applicationId, (application, now) =>
         {
@@ -77,7 +77,7 @@ public sealed class RentalApplicationService
             if (applicant is not null && !applicant.RowVersion.AsSpan().SequenceEqual(expectedRowVersion))
                 throw new StaleDataException();
 
-            application.SaveApplicantDetails(applicantUserId, applicantUserId, details, now);
+            application.SaveApplicantDetails(applicantUserId, applicantUserId, details, now, allowInvalid);
         }, cancellationToken);
     }
 
@@ -115,12 +115,13 @@ public sealed class RentalApplicationService
     }
 
     public Task<ServiceResult> SaveResidenceSectionAsync(
-        int applicationId, string applicantUserId, Guid expectedSectionVersion, CancellationToken cancellationToken = default)
+        int applicationId, string applicantUserId, Guid expectedSectionVersion, bool allowInvalid = false,
+        CancellationToken cancellationToken = default)
     {
         return _updater.ApplyAsync(applicationId, (application, now) =>
         {
             EnsureResidenceSectionVersion(application, expectedSectionVersion);
-            application.SaveResidenceSection(applicantUserId, now);
+            application.SaveResidenceSection(applicantUserId, now, allowInvalid);
         }, cancellationToken);
     }
 

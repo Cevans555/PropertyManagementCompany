@@ -10,6 +10,7 @@ using PropertyManagement.Data.Queries;
 using PropertyManagement.Data.Seeding;
 using PropertyManagement.Data.Services;
 using PropertyManagement.Web.Authorization;
+using PropertyManagement.Web.Infrastructure;
 using PropertyManagement.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -29,6 +30,7 @@ builder.Services.AddScoped<PropertyService>();
 builder.Services.AddScoped<ManagerNoteService>();
 builder.Services.AddScoped<ApplicationPageBuilder>();
 builder.Services.AddScoped<ApplicationListQuery>();
+builder.Services.Configure<FeatureOptions>(builder.Configuration.GetSection(FeatureOptions.SectionName));
 
 builder.Services.AddDbContext<PropertyManagementDbContext>((services, options) =>
 {

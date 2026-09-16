@@ -5,9 +5,11 @@ using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using PropertyManagement.Core.Entities;
 using PropertyManagement.Core.Enums;
 using PropertyManagement.Core.Security;
+using PropertyManagement.Core.Validation;
 using PropertyManagement.Data;
 using PropertyManagement.Data.Services;
 using PropertyManagement.Web.Authorization;
@@ -22,6 +24,7 @@ namespace PropertyManagement.Web.Controllers;
 public class ApplicationsController : Controller
 {
     public const string StatusMessageKey = "StatusMessage";
+    public const string WarningMessageKey = "WarningMessage";
     public const string ErrorMessageKey = "ErrorMessage";
 
     private const string ResidenceFormPartial = "_ResidenceForm";
@@ -31,15 +34,18 @@ public class ApplicationsController : Controller
     private readonly PropertyManagementDbContext _db;
     private readonly RentalApplicationService _applicationService;
     private readonly ApplicationPageBuilder _pageBuilder;
+    private readonly IOptionsSnapshot<FeatureOptions> _features;
 
     public ApplicationsController(
         PropertyManagementDbContext db,
         RentalApplicationService applicationService,
-        ApplicationPageBuilder pageBuilder)
+        ApplicationPageBuilder pageBuilder,
+        IOptionsSnapshot<FeatureOptions> features)
     {
         _db = db;
         _applicationService = applicationService;
         _pageBuilder = pageBuilder;
+        _features = features;
     }
 
     private string CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
@@ -111,6 +117,15 @@ public class ApplicationsController : Controller
         var defaultSection = canEdit ? ApplicationSection.Applicant : ApplicationSection.Summary;
 
         var page = await _pageBuilder.BuildAsync(application, section ?? defaultSection, User, posted: null, cancellationToken);
+
+        if (page.CanEdit && page.Section == ApplicationSection.Applicant)
+        {
+            foreach (var error in page.SavedApplicantDetailsErrors)
+            {
+                ModelState.AddModelError($"{nameof(ApplicationPageViewModel.ApplicantDetails)}.{error.Field}", error.Message);
+            }
+        }
+
         return View(page);
     }
 
@@ -130,13 +145,24 @@ public class ApplicationsController : Controller
             case ApplicationCommands.Continue when model.Section == ApplicationSection.Applicant:
             {
                 KeepModelStateFor(nameof(model.ApplicantDetails));
-                if (!ModelState.IsValid)
+
+                var details = model.ApplicantDetails.ToDetails();
+                var allowInvalid = _features.Value.SaveInvalidSections;
+                var errors = ApplicantDetailsRules.Validate(details);
+
+                if (!ModelState.IsValid && (!allowInvalid || errors.Any(e => e.BlocksSaving)))
                     return await RedisplayAsync(application, model, error: null, cancellationToken);
 
                 var result = await _applicationService.SaveApplicantDetailsAsync(
-                    id, userId, model.ApplicantDetails.ToDetails(), DecodeRowVersion(model.ApplicantRowVersion), cancellationToken);
+                    id, userId, details, DecodeRowVersion(model.ApplicantRowVersion), allowInvalid, cancellationToken);
                 if (!result.Succeeded)
                     return await RedisplayAsync(application, model, result.Error, cancellationToken);
+
+                if (errors.Count > 0)
+                {
+                    TempData[WarningMessageKey] =
+                        "Your applicant information was saved with errors. You can keep going, but you'll need to fix them before you submit.";
+                }
 
                 return RedirectToSection(id, ApplicationSection.Residences);
             }
@@ -144,10 +170,18 @@ public class ApplicationsController : Controller
             case ApplicationCommands.Continue when model.Section == ApplicationSection.Residences:
             {
                 ModelState.Clear();
+
+                var allowInvalid = _features.Value.SaveInvalidSections;
                 var result = await _applicationService.SaveResidenceSectionAsync(
-                    id, userId, model.ResidenceSectionVersion, cancellationToken);
+                    id, userId, model.ResidenceSectionVersion, allowInvalid, cancellationToken);
                 if (!result.Succeeded)
                     return await RedisplayAsync(application, model, result.Error, cancellationToken);
+
+                if (ResidenceSectionRules.Validate(application.Residences.Count).Count > 0)
+                {
+                    TempData[WarningMessageKey] =
+                        "Your residence history was saved with errors. You'll need to fix them before you submit.";
+                }
 
                 return RedirectToSection(id, ApplicationSection.Summary);
             }
