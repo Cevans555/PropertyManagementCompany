@@ -32,6 +32,9 @@
                         @if (User.IsInRole(Roles.PropertyManager))
                         {
                             <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Reviews" asp-action="Queue">Review queue</a>
+                            </li>
+                            <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="" asp-controller="Properties" asp-action="Index">Properties</a>
                             </li>
                         }

@@ -1,0 +1,33 @@
+@model ApplicationPageViewModel
+
+<div class="card mb-4 border-primary-subtle">
+    <div class="card-body d-flex flex-wrap align-items-center gap-2">
+        @if (Model.Header.Status == ApplicationStatus.Submitted)
+        {
+            <span class="me-auto">Waiting in the review queue.</span>
+            <form asp-controller="Reviews" asp-action="Claim" asp-route-id="@Model.Id" method="post">
+                <button type="submit" class="btn btn-sm btn-primary">Claim for review</button>
+            </form>
+        }
+        else if (Model.Header.Status == ApplicationStatus.UnderReview && Model.IsClaimedByCurrentUser)
+        {
+            <span class="me-auto">You're reviewing this application.</span>
+            <button type="button" class="btn btn-sm btn-primary"
+                    data-modal-url="@Url.Action("Review", "Reviews", new { id = Model.Id })"
+                    data-modal-reload="true">
+                Complete review
+            </button>
+            <form asp-controller="Reviews" asp-action="Release" asp-route-id="@Model.Id" method="post">
+                <button type="submit" class="btn btn-sm btn-outline-secondary">Release to queue</button>
+            </form>
+        }
+        else if (Model.Header.Status == ApplicationStatus.UnderReview)
+        {
+            <span>Claimed by <strong>@Model.ClaimedByName</strong>. Only they can complete or release the review.</span>
+        }
+        else
+        {
+            <span class="text-muted">No review action is needed while the application is @Model.Header.Status.DisplayName().ToLowerInvariant().</span>
+        }
+    </div>
+</div>

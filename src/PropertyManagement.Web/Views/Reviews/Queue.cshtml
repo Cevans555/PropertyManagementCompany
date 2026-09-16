@@ -1,0 +1,17 @@
+@using PropertyManagement.Web.Controllers
+@{
+    ViewData["Title"] = "Review queue";
+}
+
+<h1 class="h3 mb-3">Review queue</h1>
+
+@if (TempData[ApplicationsController.StatusMessageKey] is string statusMessage)
+{
+    <div class="alert alert-success" role="status">@statusMessage</div>
+}
+@if (TempData[ApplicationsController.ErrorMessageKey] is string error)
+{
+    <div class="alert alert-danger" role="alert">@error</div>
+}
+
+@await Component.InvokeAsync("ReviewQueue")

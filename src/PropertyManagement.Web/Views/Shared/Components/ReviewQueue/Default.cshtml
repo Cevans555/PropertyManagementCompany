@@ -1,0 +1,120 @@
+@model ReviewQueueViewModel
+@using System.Globalization
+@{
+    var usd = CultureInfo.GetCultureInfo("en-US");
+    string Date(DateTime? value) => value?.ToString("MMM d, yyyy", usd) ?? "-";
+}
+
+<section class="mb-5" aria-labelledby="waiting-heading">
+    <h2 id="waiting-heading" class="h5">Waiting for review <span class="badge text-bg-secondary">@Model.Waiting.Count</span></h2>
+    @if (Model.Waiting.Count == 0)
+    {
+        <p class="text-muted">No submitted applications are waiting.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th scope="col">Applicant</th>
+                        <th scope="col">Unit</th>
+                        <th scope="col">Submitted</th>
+                        <th scope="col"><span class="visually-hidden">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in Model.Waiting)
+                    {
+                        <tr>
+                            <td>@row.ApplicantName</td>
+                            <td>@row.PropertyName &middot; @row.UnitNumber</td>
+                            <td>@Date(row.SubmittedAt)</td>
+                            <td class="text-end text-nowrap">
+                                <a class="btn btn-sm btn-outline-secondary" asp-controller="Applications" asp-action="Details" asp-route-id="@row.ApplicationId">View</a>
+                                <form asp-controller="Reviews" asp-action="Claim" asp-route-id="@row.ApplicationId" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-primary">Claim</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+<section class="mb-5" aria-labelledby="mine-heading">
+    <h2 id="mine-heading" class="h5">My reviews <span class="badge text-bg-primary">@Model.MyClaims.Count</span></h2>
+    @if (Model.MyClaims.Count == 0)
+    {
+        <p class="text-muted">You haven't claimed any applications.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th scope="col">Applicant</th>
+                        <th scope="col">Unit</th>
+                        <th scope="col">Claimed</th>
+                        <th scope="col"><span class="visually-hidden">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in Model.MyClaims)
+                    {
+                        <tr>
+                            <td>@row.ApplicantName</td>
+                            <td>@row.PropertyName &middot; @row.UnitNumber</td>
+                            <td>@Date(row.ClaimedAt)</td>
+                            <td class="text-end text-nowrap">
+                                <a class="btn btn-sm btn-primary" asp-controller="Applications" asp-action="Details" asp-route-id="@row.ApplicationId">Review</a>
+                                <form asp-controller="Reviews" asp-action="Release" asp-route-id="@row.ApplicationId" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">Release</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+<section aria-labelledby="others-heading">
+    <h2 id="others-heading" class="h5">Being reviewed by others <span class="badge text-bg-light border">@Model.OtherClaims.Count</span></h2>
+    @if (Model.OtherClaims.Count == 0)
+    {
+        <p class="text-muted">No applications are claimed by other managers.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th scope="col">Applicant</th>
+                        <th scope="col">Unit</th>
+                        <th scope="col">Claimed by</th>
+                        <th scope="col"><span class="visually-hidden">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in Model.OtherClaims)
+                    {
+                        <tr>
+                            <td>@row.ApplicantName</td>
+                            <td>@row.PropertyName &middot; @row.UnitNumber</td>
+                            <td>@row.ClaimedBy <span class="small text-muted">since @Date(row.ClaimedAt)</span></td>
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-outline-secondary" asp-controller="Applications" asp-action="Details" asp-route-id="@row.ApplicationId">View</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
