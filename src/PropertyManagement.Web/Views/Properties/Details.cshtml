@@ -10,16 +10,18 @@
     </ol>
 </nav>
 
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+<div class="page-header">
     <div>
-        <h1 class="h3 mb-1">@Model.Name</h1>
-        <p class="text-muted mb-0">@Model.Street, @Model.City, @Model.State @Model.PostalCode</p>
+        <h1>@Model.Name</h1>
+        <p class="page-subtitle">@Model.Street, @Model.City, @Model.State @Model.PostalCode</p>
     </div>
-    <button type="button" class="btn btn-primary"
-            data-modal-url="@Url.Action("Create", "Units", new { propertyId = Model.Id })"
-            data-modal-refresh="#unit-table">
-        Add unit
-    </button>
+    <div class="page-actions">
+        <button type="button" class="btn btn-primary"
+                data-modal-url="@Url.Action("Create", "Units", new { propertyId = Model.Id })"
+                data-modal-refresh="#unit-table">
+            Add unit
+        </button>
+    </div>
 </div>
 
 <div id="unit-table" data-refresh-url="@Url.Action("Table", "Units", new { id = Model.Id })">
