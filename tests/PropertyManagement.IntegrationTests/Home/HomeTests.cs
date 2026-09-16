@@ -26,7 +26,6 @@ public class HomeTests
         Assert.Contains("Register as manager", html);
         Assert.Contains("Create an account", html);
 
-        // Demo credentials live in the README, never in the app, in any environment.
         Assert.DoesNotContain(DbInitializer.DemoPassword, html);
         Assert.DoesNotContain(TestAccounts.Manager, html);
     }
@@ -65,7 +64,6 @@ public class HomeTests
         AssertCount(html, expectedClaimed, "Claimed by you");
         AssertCount(html, expectedProperties, "Properties");
 
-        // An applicant's dashboard must not be what a manager sees.
         Assert.DoesNotContain("Need your attention", html);
     }
 
@@ -85,7 +83,6 @@ public class HomeTests
         Assert.Contains("Waiting on a decision", html);
         AssertCount(html, expectedAwaiting, "Waiting on a decision");
 
-        // Nothing from the manager dashboard should reach an applicant.
         Assert.DoesNotContain("Waiting to be claimed", html);
         Assert.DoesNotContain("Go to review queue", html);
     }

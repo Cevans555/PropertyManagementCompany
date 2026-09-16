@@ -46,7 +46,8 @@ PropertyManagement.slnx
 │  └─ PropertyManagement.Data   DbContext, migrations, seeding
 └─ tests/
    ├─ PropertyManagement.Tests             unit tests for Core (no database)
-   └─ PropertyManagement.IntegrationTests  services against a real LocalDB database
+   ├─ PropertyManagement.IntegrationTests  services and pages against a real LocalDB database
+   └─ PropertyManagement.BrowserTests      Playwright smoke tests for the client-side flows
 ```
 References point toward Core: Web → Core, Data; Data → Core; Tests → Core.
 
@@ -71,7 +72,7 @@ This isn't a rule that every read needs a class of its own. A small one-off look
 
 **Review workflow.** A property manager claims a submitted application from the review queue before completing it, which moves it to Under Review and records who holds it. Only the manager holding it can complete or release the review; anyone else sees who has it. Completing a review is one modal with three outcomes: approve (which creates a 12-month lease from a chosen start date), return, or deny. Return and deny require a comment, and every outcome is recorded in the status history.
 
-**The application list and grid.** Role scoping, both filters, the sort and `Skip`/`Take` are all applied to the `IQueryable` before it runs, and the filtered total is counted in the same request, so SQL Server does the work rather than the app loading every application and narrowing it in memory. Applicant names are resolved in a second lookup for just the rows on the page, instead of a join per row. Every sort ends with `Id`, so rows with equal sort values can't swap between pages and appear twice; a page past the end is clamped to the last page. `ApplicationListQuery` sits in `Web/Services` rather than `Data/Queries` because it takes a `ClaimsPrincipal` and projects into view models — a presentation query, the same reasoning as `ApplicationPageBuilder`.
+**The application list and grid.** Role scoping, both filters, the sort and `Skip`/`Take` are all applied to the `IQueryable` before it runs, and the filtered total is counted in the same request, so SQL Server does the work rather than the app loading every application and narrowing it in memory. Applicant names are resolved in a second lookup for just the rows on the page, instead of a join per row. Every sort ends with `Id`, so rows with equal sort values can't swap between pages and appear twice; a page past the end is clamped to the last page. `ApplicationListQuery` lives in `Web/Queries/Applications` rather than `Data/Queries` because it takes a `ClaimsPrincipal` and projects directly into presentation view models.
 
 **The grid is reusable.** `GridViewComponent` renders the table shell, headers and sort buttons from a `GridViewModel` that names a JSON endpoint and describes its columns (key, title, sort key, and a format: text, date, badge or link). `wwwroot/js/grid.js` fetches the rows. Nothing in `Models/Grid` knows about applications, so any endpoint that accepts `page`, `pageSize`, `sort` and `direction` and returns a `PagedResult<T>` can use it by describing its columns. Grid state lives in the page URL, so refreshing, bookmarking and Back/Forward all work, and cells are written with `textContent`, so JSON data is never parsed as markup.
 
@@ -86,3 +87,7 @@ This isn't a rule that every read needs a class of its own. A small one-off look
 **Expected failures aren't exceptions.** Services return a `ServiceResult`, so a broken rule, a stale save or a deadlock becomes a message a page can show.
 
 **Testing.** Domain rules are covered by fast unit tests with no database. The services are covered by integration tests against a real LocalDB database, because what's worth proving there (concurrency tokens, the serializable approval transaction, EF includes) only behaves correctly against real SQL Server.
+
+**Browser tests.** A small Playwright suite (`tests/PropertyManagement.BrowserTests`) covers only what needs JavaScript: the applicant journey with the residence modal, the review modal's approve/deny rules, the shared modal pattern on Properties, the reusable grid's paging/sorting/filtering and URL state, and saving sections with errors. The app runs on a real Kestrel port against its own temporary database, and Chromium is installed on the first run. Everything else is proven faster by the integration tests.
+
+**Logging.** Services log each status change (started, submitted, withdrawn, claimed, released, returned, denied, approved with the lease start date) at `Information`, and refused changes, stale saves, approval deadlocks and failed sign-ins at `Warning`. Entries carry ids only, never names, addresses or incomes. The domain entities don't log; the services log the outcome. EF Core's per-command SQL logging is set to `Warning` so these events are readable.

@@ -11,10 +11,6 @@ using PropertyManagement.Web.Services;
 
 namespace PropertyManagement.Web.Controllers;
 
-/// <summary>
-/// The manager review workflow: the queue, claiming and releasing an application, and completing a review
-/// with an outcome of approve, return or deny.
-/// </summary>
 [Authorize(Policy = Policies.PropertyManager)]
 public class ReviewsController : Controller
 {

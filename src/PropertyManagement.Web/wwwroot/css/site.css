@@ -1,11 +1,3 @@
-/*
-  A small theme layer over Bootstrap. Everything here either overrides a Bootstrap variable or adds one of the
-  few repeated patterns in the app (page headers, stat cards, empty states, the section steps, status badges).
-  No component is restyled from scratch, so the markup stays ordinary Bootstrap.
-
-  Palette: navy for actions and structure, tan only as an accent, cream page with white surfaces.
-*/
-
 :root {
   --pm-navy: #264a6b;
   --pm-navy-dark: #1b354d;
@@ -52,7 +44,6 @@ body {
   overflow-x: hidden;
 }
 
-/* The page body grows so the footer sits at the bottom of short pages instead of floating mid-screen. */
 .pm-page {
   flex: 1 0 auto;
 }
@@ -60,8 +51,6 @@ body {
 .text-muted {
   color: var(--pm-muted) !important;
 }
-
-/* Buttons: navy is the action colour. Bootstrap's buttons read their own variables, not --bs-primary. */
 
 .btn-primary {
   --bs-btn-bg: var(--pm-navy);
@@ -115,8 +104,6 @@ body {
 .form-label {
   font-weight: 500;
 }
-
-/* Header and navigation */
 
 .pm-navbar {
   background-color: var(--pm-navy-dark);
@@ -209,8 +196,6 @@ body {
   }
 }
 
-/* Page headings: one pattern for a title, optional subtitle and right-aligned actions. */
-
 .page-header {
   display: flex;
   flex-wrap: wrap;
@@ -261,8 +246,6 @@ body {
 .breadcrumb {
   font-size: 0.875rem;
 }
-
-/* Surfaces */
 
 .card {
   border-color: var(--pm-line);
@@ -322,8 +305,6 @@ body {
   font-weight: 700;
 }
 
-/* Dashboard numbers */
-
 .stat-card {
   height: 100%;
   border-top: 3px solid var(--pm-tan);
@@ -343,8 +324,6 @@ body {
   color: var(--pm-muted);
   margin-top: 0.25rem;
 }
-
-/* Tables: the scroll wrapper doubles as the surface, so each list's markup stays a plain Bootstrap table. */
 
 .table {
   --bs-table-bg: #fff;
@@ -401,8 +380,6 @@ body {
   --bs-pagination-focus-box-shadow: 0 0 0 0.25rem rgba(38, 74, 107, 0.35);
 }
 
-/* Status badges: soft fills with dark text. The status name is always the badge text, so colour is only a hint. */
-
 .badge {
   font-weight: 600;
   letter-spacing: 0.01em;
@@ -421,8 +398,6 @@ body {
 .status-denied { background-color: #f9e1df; color: #9b2c24; border-color: #efc5c1; }
 .status-withdrawn { background-color: #eceef1; color: #4a5361; border-color: #d9dde3; }
 
-/* Used wherever a list has nothing in it yet. */
-
 .empty-state {
   border: 1px dashed var(--pm-line);
   border-radius: 0.5rem;
@@ -436,8 +411,6 @@ body {
 .empty-state-sm {
   padding: 1.5rem 1rem;
 }
-
-/* The application page's numbered section steps. */
 
 .section-steps {
   display: flex;
@@ -528,8 +501,6 @@ body {
   gap: 0.5rem;
 }
 
-/* Choice cards: a radio group where each option is a bordered, clickable panel. */
-
 .choice-group {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
@@ -576,8 +547,6 @@ body {
   box-shadow: inset 0 0 0 1px var(--pm-navy);
 }
 
-/* Internal manager content is set apart from what applicants see. */
-
 .manager-only {
   border-left: 3px solid var(--pm-tan);
 }
@@ -593,8 +562,6 @@ body {
   letter-spacing: 0.03em;
   text-transform: uppercase;
 }
-
-/* Sign-in and registration */
 
 .auth-card {
   max-width: 28rem;
@@ -620,8 +587,6 @@ body {
     padding: 1.25rem;
   }
 }
-
-/* Signed-out landing page */
 
 .feature-row {
   border-top: 1px solid var(--pm-line);

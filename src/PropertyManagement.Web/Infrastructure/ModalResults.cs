@@ -17,7 +17,6 @@ public static class ModalResults
         return controller.Json(new { success = true });
     }
 
-    /// <summary>Closes the modal on success, or re-renders it with the service's error message.</summary>
     public static IActionResult ToModalResult(
         this Controller controller, ServiceResult result, string partialViewName, object model)
     {

@@ -1,5 +1,3 @@
-/* Site-wide styles live in wwwroot/css/site.css; this scoped file only keeps a long brand name from overflowing. */
-
 a.navbar-brand {
   white-space: normal;
 }

@@ -3,7 +3,6 @@
 @{
     ViewData["Title"] = "Create an account";
 
-    // The home page's role cards link here with ?role=..., which only preselects the radio button.
     var requestedRole = Context.Request.Query["role"].ToString();
     if (string.IsNullOrEmpty(Model.Role) && Roles.All.Contains(requestedRole))
     {

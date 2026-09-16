@@ -12,11 +12,6 @@ using PropertyManagement.Web.Services;
 
 namespace PropertyManagement.Web.Controllers;
 
-/// <summary>
-/// The residence history section of an application: the list that refreshes in place and the add, edit and
-/// remove modals. Every change still goes through <see cref="RentalApplicationService"/>, because a residence
-/// belongs to the application aggregate rather than standing on its own.
-/// </summary>
 [Authorize]
 public class ApplicationResidencesController : Controller
 {
@@ -133,7 +128,6 @@ public class ApplicationResidencesController : Controller
         return this.ToModalResult(result, ConfirmPartial, RemoveConfirmation(application, id, residenceSectionVersion));
     }
 
-    /// <summary>Authorizes against the application the residence belongs to, since a residence has no owner of its own.</summary>
     private async Task<ApplicationAccess> AuthorizeForResidenceAsync(int residenceId, CancellationToken cancellationToken)
     {
         var applicationId = await _applications.ApplicationIdForResidenceAsync(residenceId, cancellationToken);

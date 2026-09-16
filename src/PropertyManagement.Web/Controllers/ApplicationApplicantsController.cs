@@ -8,10 +8,6 @@ using PropertyManagement.Web.Services;
 
 namespace PropertyManagement.Web.Controllers;
 
-/// <summary>
-/// The people on an application: the list that refreshes in place and the modal that adds a co-applicant.
-/// Anyone already on the application may add another, and the ownership checks apply to all of them.
-/// </summary>
 [Authorize]
 public class ApplicationApplicantsController : Controller
 {

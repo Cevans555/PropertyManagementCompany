@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using PropertyManagement.Core.Common;
 using PropertyManagement.Core.Dtos;
 using PropertyManagement.Core.Entities;
@@ -17,17 +18,20 @@ public sealed class RentalApplicationService
     private readonly ApplicationUpdater _updater;
     private readonly LeaseQueries _leases;
     private readonly TimeProvider _timeProvider;
+    private readonly ILogger<RentalApplicationService> _logger;
 
     public RentalApplicationService(
         PropertyManagementDbContext db,
         ApplicationUpdater updater,
         LeaseQueries leases,
-        TimeProvider timeProvider)
+        TimeProvider timeProvider,
+        ILogger<RentalApplicationService> logger)
     {
         _db = db;
         _updater = updater;
         _leases = leases;
         _timeProvider = timeProvider;
+        _logger = logger;
     }
 
     public async Task<ServiceResult<int>> StartAsync(int unitId, string applicantUserId, CancellationToken cancellationToken = default)
@@ -44,27 +48,39 @@ public sealed class RentalApplicationService
             _db.RentalApplications.Add(application);
             await _db.SaveChangesAsync(cancellationToken);
 
+            _logger.LogInformation("Application {ApplicationId} started for unit {UnitId} by user {UserId}", application.Id, unitId, applicantUserId);
             return ServiceResult<int>.Success(application.Id);
         }
         catch (DomainException ex)
         {
+            _logger.LogWarning("Application for unit {UnitId} refused: {Reason}", unitId, ex.Message);
             _updater.Fail(ex.Message);
             return ServiceResult<int>.Failure(ex.Message);
         }
     }
 
-    public Task<ServiceResult> SubmitAsync(int applicationId, string applicantUserId, CancellationToken cancellationToken = default)
+    public async Task<ServiceResult> SubmitAsync(int applicationId, string applicantUserId, CancellationToken cancellationToken = default)
     {
-        return _updater.UpdateAsync(applicationId, async (application, now) =>
+        var result = await _updater.UpdateAsync(applicationId, async (application, now) =>
         {
             var hasActiveLease = await _leases.UnitHasActiveLeaseAsync(application.UnitId, _timeProvider.Today(), cancellationToken);
             application.Submit(applicantUserId, hasActiveLease, now);
         }, cancellationToken);
+
+        if (result.Succeeded)
+            _logger.LogInformation("Application {ApplicationId} submitted by user {UserId}", applicationId, applicantUserId);
+
+        return result;
     }
 
-    public Task<ServiceResult> WithdrawAsync(int applicationId, string applicantUserId, CancellationToken cancellationToken = default)
+    public async Task<ServiceResult> WithdrawAsync(int applicationId, string applicantUserId, CancellationToken cancellationToken = default)
     {
-        return _updater.ApplyAsync(applicationId, (application, now) => application.Withdraw(applicantUserId, now), cancellationToken);
+        var result = await _updater.ApplyAsync(applicationId, (application, now) => application.Withdraw(applicantUserId, now), cancellationToken);
+
+        if (result.Succeeded)
+            _logger.LogInformation("Application {ApplicationId} withdrawn by user {UserId}", applicationId, applicantUserId);
+
+        return result;
     }
 
     public Task<ServiceResult> SaveApplicantDetailsAsync(

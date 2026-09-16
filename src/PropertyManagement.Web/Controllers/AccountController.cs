@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using PropertyManagement.Core.Security;
@@ -11,11 +11,14 @@ public class AccountController : Controller
 {
     private readonly UserManager<AppUser> _userManager;
     private readonly SignInManager<AppUser> _signInManager;
+    private readonly ILogger<AccountController> _logger;
 
-    public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager)
+    public AccountController(
+        UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, ILogger<AccountController> logger)
     {
         _userManager = userManager;
         _signInManager = signInManager;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -62,6 +65,7 @@ public class AccountController : Controller
             return View(model);
         }
 
+        _logger.LogInformation("User {UserId} registered as {Role}", user.Id, model.Role);
         await _signInManager.SignInAsync(user, isPersistent: false);
         return RedirectToHome();
     }
@@ -93,6 +97,8 @@ public class AccountController : Controller
 
             return RedirectToHome();
         }
+
+        _logger.LogWarning("Sign-in failed (locked out: {LockedOut})", result.IsLockedOut);
 
         if (result.IsLockedOut)
             ModelState.AddModelError(string.Empty, "This account is locked after too many failed attempts. Try again later.");

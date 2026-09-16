@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using PropertyManagement.Core.Common;
@@ -37,12 +38,19 @@ public sealed class TestDatabase : IAsyncLifetime
 
     public RentalApplicationService ApplicantService(PropertyManagementDbContext db)
     {
-        return new RentalApplicationService(db, new ApplicationUpdater(db, Clock), new LeaseQueries(db), Clock);
+        return new RentalApplicationService(
+            db, Updater(db), new LeaseQueries(db), Clock, NullLogger<RentalApplicationService>.Instance);
     }
 
     public ApplicationReviewService ReviewService(PropertyManagementDbContext db)
     {
-        return new ApplicationReviewService(new ApplicationUpdater(db, Clock), new LeaseQueries(db), Clock);
+        return new ApplicationReviewService(
+            Updater(db), new LeaseQueries(db), Clock, NullLogger<ApplicationReviewService>.Instance);
+    }
+
+    private ApplicationUpdater Updater(PropertyManagementDbContext db)
+    {
+        return new ApplicationUpdater(db, Clock, NullLogger<ApplicationUpdater>.Instance);
     }
 
     public async Task<string> CreateUserAsync(PropertyManagementDbContext db, string role)
