@@ -4,6 +4,9 @@ namespace PropertyManagement.Web.Infrastructure;
 
 public static class StatusBadges
 {
+    public static IReadOnlyDictionary<string, string> ByName { get; } =
+        Enum.GetValues<ApplicationStatus>().ToDictionary(s => s.ToString(), CssClass);
+
     public static string CssClass(ApplicationStatus status)
     {
         switch (status)

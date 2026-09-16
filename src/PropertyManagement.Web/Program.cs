@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +15,7 @@ using PropertyManagement.Data.Services;
 using PropertyManagement.Web.Authorization;
 using PropertyManagement.Web.Infrastructure;
 using PropertyManagement.Web.Services;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -60,6 +64,10 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.LoginPath = "/Account/Login";
     options.LogoutPath = "/Account/Logout";
     options.AccessDeniedPath = "/Account/AccessDenied";
+
+    // JSON endpoints answer with status codes; only pages redirect to the login and access-denied pages.
+    options.Events.OnRedirectToLogin = context => ApiAwareRedirect(context, StatusCodes.Status401Unauthorized);
+    options.Events.OnRedirectToAccessDenied = context => ApiAwareRedirect(context, StatusCodes.Status403Forbidden);
 });
 
 builder.Services.AddAuthorizationBuilder()
@@ -70,7 +78,15 @@ builder.Services.AddAuthorizationBuilder()
 builder.Services.AddSingleton<IAuthorizationHandler, RentalApplicationAuthorizationHandler>();
 
 builder.Services.AddControllersWithViews(options =>
-    options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute()));
+        options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute()))
+    .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
+builder.Services.AddOpenApi(options => options.AddDocumentTransformer((document, _, _) =>
+{
+    document.Info.Title = "Property Management API";
+    document.Info.Description = "JSON endpoints used by the application grid. Requests use the signed-in user's cookie.";
+    return Task.CompletedTask;
+}));
 
 var app = builder.Build();
 
@@ -99,7 +115,23 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
+if (!app.Environment.IsProduction())
+{
+    app.MapOpenApi().AllowAnonymous();
+    app.MapScalarApiReference().AllowAnonymous();
+}
+
 app.Run();
+
+static Task ApiAwareRedirect(RedirectContext<CookieAuthenticationOptions> context, int statusCode)
+{
+    if (context.Request.Path.StartsWithSegments("/api"))
+        context.Response.StatusCode = statusCode;
+    else
+        context.Response.Redirect(context.RedirectUri);
+
+    return Task.CompletedTask;
+}
 
 public partial class Program
 {

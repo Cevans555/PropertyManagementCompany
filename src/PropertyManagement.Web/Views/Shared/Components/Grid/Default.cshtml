@@ -1,0 +1,70 @@
+@model PropertyManagement.Web.Models.Grid.GridViewModel
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@{
+    var json = new JsonSerializerOptions(JsonSerializerDefaults.Web)
+    {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
+    };
+}
+
+<div id="@Model.Id" class="grid"
+     data-grid
+     data-grid-url="@Model.DataUrl"
+     data-grid-columns="@JsonSerializer.Serialize(Model.Columns, json)"
+     data-grid-sort="@Model.DefaultSort"
+     data-grid-direction="@Model.DefaultDirection.ToString().ToLowerInvariant()"
+     data-grid-page-size="@Model.PageSize"
+     data-grid-empty="@Model.EmptyText"
+     data-grid-filter-form="@Model.FilterFormId">
+    <p class="small text-muted mb-2" data-grid-summary aria-live="polite">Loading…</p>
+    <div class="table-responsive">
+        <table class="table align-middle" aria-busy="true">
+            <caption class="visually-hidden">@Model.Caption</caption>
+            <thead>
+                <tr>
+                    @foreach (var column in Model.Columns)
+                    {
+                        if (column.SortKey is null)
+                        {
+                            <th scope="col">
+                                @if (column.HideTitle)
+                                {
+                                    <span class="visually-hidden">@column.Title</span>
+                                }
+                                else
+                                {
+                                    @column.Title
+                                }
+                            </th>
+                        }
+                        else
+                        {
+                            <th scope="col" data-grid-sort-key="@column.SortKey" aria-sort="none">
+                                <button type="button" class="btn btn-link p-0 text-reset fw-semibold text-decoration-none grid-sort">
+                                    @column.Title<span class="grid-sort-icon" aria-hidden="true"></span>
+                                </button>
+                            </th>
+                        }
+                    }
+                </tr>
+            </thead>
+            <tbody data-grid-body>
+                <tr>
+                    <td colspan="@Model.Columns.Count" class="text-center text-muted py-5">
+                        <noscript>This list needs JavaScript enabled.</noscript>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    @* hidden sits on the outer element: Bootstrap's d-flex is !important and would override it. *@
+    <nav data-grid-pager aria-label="@Model.Caption pages" hidden>
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-grid-prev>Previous</button>
+            <span class="small text-muted" data-grid-page-label></span>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-grid-next>Next</button>
+        </div>
+    </nav>
+</div>

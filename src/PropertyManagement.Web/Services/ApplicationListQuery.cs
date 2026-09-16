@@ -1,9 +1,10 @@
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
-using PropertyManagement.Core.Enums;
+using PropertyManagement.Core.Entities;
 using PropertyManagement.Core.Security;
 using PropertyManagement.Data;
 using PropertyManagement.Web.Models.Applications;
+using PropertyManagement.Web.Models.Grid;
 
 namespace PropertyManagement.Web.Services;
 
@@ -16,13 +17,14 @@ public sealed class ApplicationListQuery
         _db = db;
     }
 
-    public async Task<IReadOnlyList<ApplicationListRowViewModel>> ListAsync(
-        ClaimsPrincipal user, ApplicationListFilter filter, CancellationToken cancellationToken)
+    public async Task<PagedResult<ApplicationListRowViewModel>> ListAsync(
+        ClaimsPrincipal user, ApplicationListFilter filter, ApplicationListPaging paging, CancellationToken cancellationToken)
     {
         var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+        var isManager = user.IsInRole(Roles.PropertyManager);
         var query = _db.RentalApplications.AsNoTracking();
 
-        if (!user.IsInRole(Roles.PropertyManager))
+        if (!isManager)
             query = query.Where(a => a.Applicants.Any(p => p.UserId == userId));
 
         if (filter.Status is { } status)
@@ -31,9 +33,16 @@ public sealed class ApplicationListQuery
         if (filter.PropertyId is { } propertyId)
             query = query.Where(a => a.Unit.PropertyId == propertyId);
 
-        var rows = await query
-            .OrderByDescending(a => a.SubmittedAt ?? a.CreatedAt)
-            .ThenByDescending(a => a.Id)
+        var totalCount = await query.CountAsync(cancellationToken);
+        var page = PageMath.ClampPage(paging.Page, totalCount, paging.PageSize);
+
+        var sort = paging.Sort;
+        if (sort == ApplicationSortField.ClaimedBy && !isManager)
+            sort = ApplicationSortField.Submitted;
+
+        var rows = await Sort(query, sort, paging.Direction)
+            .Skip((page - 1) * paging.PageSize)
+            .Take(paging.PageSize)
             .Select(a => new
             {
                 a.Id,
@@ -43,7 +52,9 @@ public sealed class ApplicationListQuery
                 a.CreatedAt,
                 a.SubmittedAt,
                 ApplicantUserIds = a.Applicants.OrderByDescending(p => p.IsPrimary).ThenBy(p => p.Id).Select(p => p.UserId).ToList(),
-                ClaimedBy = _db.Users.Where(u => u.Id == a.ClaimedById).Select(u => u.FirstName + " " + u.LastName).FirstOrDefault()
+                ClaimedBy = isManager
+                    ? _db.Users.Where(u => u.Id == a.ClaimedById).Select(u => u.FirstName + " " + u.LastName).FirstOrDefault()
+                    : null
             })
             .ToListAsync(cancellationToken);
 
@@ -54,7 +65,7 @@ public sealed class ApplicationListQuery
             .Select(u => new { u.Id, Name = u.FirstName + " " + u.LastName })
             .ToDictionaryAsync(u => u.Id, u => u.Name, cancellationToken);
 
-        return rows
+        var items = rows
             .Select(r => new ApplicationListRowViewModel(
                 r.Id,
                 r.PropertyName,
@@ -65,5 +76,36 @@ public sealed class ApplicationListQuery
                 r.SubmittedAt,
                 r.ClaimedBy))
             .ToList();
+
+        return new PagedResult<ApplicationListRowViewModel>(items, totalCount, page, paging.PageSize);
+    }
+
+    private IOrderedQueryable<RentalApplication> Sort(
+        IQueryable<RentalApplication> query, ApplicationSortField sort, SortDirection direction)
+    {
+        var descending = direction == SortDirection.Desc;
+
+        IOrderedQueryable<RentalApplication> ordered;
+        switch (sort)
+        {
+            case ApplicationSortField.Property:
+                ordered = query
+                    .OrderBy(a => a.Unit.Property.Name, descending)
+                    .ThenBy(a => a.Unit.UnitNumber, descending);
+                break;
+            case ApplicationSortField.Status:
+                ordered = query.OrderBy(a => a.Status, descending);
+                break;
+            case ApplicationSortField.ClaimedBy:
+                ordered = query.OrderBy(
+                    a => _db.Users.Where(u => u.Id == a.ClaimedById).Select(u => u.FirstName + " " + u.LastName).FirstOrDefault(),
+                    descending);
+                break;
+            default:
+                ordered = query.OrderBy(a => a.SubmittedAt ?? a.CreatedAt, descending);
+                break;
+        }
+
+        return ordered.ThenBy(a => a.Id, descending);
     }
 }
