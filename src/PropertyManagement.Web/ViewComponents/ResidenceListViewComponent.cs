@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using PropertyManagement.Web.Models.Applications;
+using PropertyManagement.Web.Models.Applications.Page;
 using PropertyManagement.Web.Queries;
 
 namespace PropertyManagement.Web.ViewComponents;

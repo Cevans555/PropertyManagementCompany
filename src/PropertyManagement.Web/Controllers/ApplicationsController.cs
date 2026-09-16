@@ -12,6 +12,8 @@ using PropertyManagement.Web.Authorization;
 using PropertyManagement.Web.Infrastructure;
 using PropertyManagement.Web.Models;
 using PropertyManagement.Web.Models.Applications;
+using PropertyManagement.Web.Models.Applications.Page;
+using PropertyManagement.Web.Models.Applications.List;
 using PropertyManagement.Web.Queries;
 using PropertyManagement.Web.Services;
 

@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace PropertyManagement.Web.Models.Applications;
+namespace PropertyManagement.Web.Models.Applications.Forms;
 
 public class CoApplicantFormViewModel
 {

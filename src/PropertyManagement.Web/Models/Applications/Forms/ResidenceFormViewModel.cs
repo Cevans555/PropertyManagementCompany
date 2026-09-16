@@ -4,7 +4,7 @@ using PropertyManagement.Core.Dtos;
 using PropertyManagement.Core.Entities;
 using PropertyManagement.Core.ValueObjects;
 
-namespace PropertyManagement.Web.Models.Applications;
+namespace PropertyManagement.Web.Models.Applications.Forms;
 
 public class ResidenceFormViewModel : IValidatableObject
 {

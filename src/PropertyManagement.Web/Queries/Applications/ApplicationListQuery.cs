@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using PropertyManagement.Core.Entities;
 using PropertyManagement.Core.Security;
 using PropertyManagement.Data;
-using PropertyManagement.Web.Models.Applications;
+using PropertyManagement.Web.Models.Applications.List;
 using PropertyManagement.Web.Models.Grid;
 
 namespace PropertyManagement.Web.Queries.Applications;

@@ -1,6 +1,6 @@
 using PropertyManagement.Core.Enums;
 
-namespace PropertyManagement.Web.Models.Applications;
+namespace PropertyManagement.Web.Models.Applications.List;
 
 public sealed record ApplicationListRowViewModel
 {

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using PropertyManagement.Data.Services;
 using PropertyManagement.Web.Authorization;
 using PropertyManagement.Web.Infrastructure;
-using PropertyManagement.Web.Models.Applications;
+using PropertyManagement.Web.Models.Applications.Forms;
 using PropertyManagement.Web.Services;
 
 namespace PropertyManagement.Web.Controllers;
