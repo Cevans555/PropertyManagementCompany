@@ -36,6 +36,7 @@
 @if (Model.CanReview)
 {
     <partial name="_ReviewActions" model="Model" />
+    <partial name="_ExistingLeaseNotice" model="Model.ExistingLeases" />
 }
 
 @if (!Model.CanEdit && Model.IsApplicantOnApplication && !Model.Header.Status.IsTerminal())

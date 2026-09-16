@@ -27,6 +27,9 @@ public class ReviewFormViewModel : IValidatableObject
     [BindNever]
     public DateOnly Today { get; set; }
 
+    [BindNever, ValidateNever]
+    public IReadOnlyList<ExistingLeaseViewModel> ExistingLeases { get; set; } = [];
+
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         if (Outcome is not null && !Enum.IsDefined(Outcome.Value))

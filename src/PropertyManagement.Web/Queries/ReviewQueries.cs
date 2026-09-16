@@ -8,14 +8,18 @@ namespace PropertyManagement.Web.Queries;
 public sealed class ReviewQueries
 {
     private readonly PropertyManagementDbContext _db;
+    private readonly ExistingLeaseQueries _existingLeases;
 
-    public ReviewQueries(PropertyManagementDbContext db)
+    public ReviewQueries(PropertyManagementDbContext db, ExistingLeaseQueries existingLeases)
     {
         _db = db;
+        _existingLeases = existingLeases;
     }
 
     public async Task<ReviewQueueViewModel> QueueAsync(string? managerId, CancellationToken cancellationToken = default)
     {
+        var withLeaseHolders = _existingLeases.ApplicationIdsWithLeaseHolders();
+
         var rows = await _db.RentalApplications
             .AsNoTracking()
             .Where(a => a.Status == ApplicationStatus.Submitted || a.Status == ApplicationStatus.UnderReview)
@@ -35,7 +39,8 @@ public sealed class ReviewQueries
                         .FirstOrDefault() ?? string.Empty,
                     SubmittedAt = a.SubmittedAt,
                     ClaimedBy = _db.Users.Where(u => u.Id == a.ClaimedById).Select(u => u.FirstName + " " + u.LastName).FirstOrDefault(),
-                    ClaimedAt = a.ClaimedAt
+                    ClaimedAt = a.ClaimedAt,
+                    HasExistingLease = withLeaseHolders.Contains(a.Id)
                 }
             })
             .ToListAsync(cancellationToken);

@@ -52,6 +52,9 @@ public class ApplicationPageViewModel
     public IReadOnlyList<StatusHistoryRowViewModel> StatusHistory { get; set; } = [];
 
     [BindNever, ValidateNever]
+    public IReadOnlyList<Reviews.ExistingLeaseViewModel> ExistingLeases { get; set; } = [];
+
+    [BindNever, ValidateNever]
     public IReadOnlyList<SubmitBlocker> SubmitBlockers { get; set; } = [];
 
     [BindNever, ValidateNever]

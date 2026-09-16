@@ -28,7 +28,13 @@
                     @foreach (var row in Model.Waiting)
                     {
                         <tr>
-                            <td>@row.ApplicantName</td>
+                            <td>
+                                @row.ApplicantName
+                                @if (row.HasExistingLease)
+                                {
+                                    <span class="badge status-badge status-returned ms-1" data-has-lease="@row.ApplicationId">Has a lease</span>
+                                }
+                            </td>
                             <td>@row.PropertyName &middot; @row.UnitNumber</td>
                             <td>@Date(row.SubmittedAt)</td>
                             <td class="text-end text-nowrap">
@@ -69,7 +75,13 @@
                     @foreach (var row in Model.MyClaims)
                     {
                         <tr>
-                            <td>@row.ApplicantName</td>
+                            <td>
+                                @row.ApplicantName
+                                @if (row.HasExistingLease)
+                                {
+                                    <span class="badge status-badge status-returned ms-1" data-has-lease="@row.ApplicationId">Has a lease</span>
+                                }
+                            </td>
                             <td>@row.PropertyName &middot; @row.UnitNumber</td>
                             <td>@Date(row.ClaimedAt)</td>
                             <td class="text-end text-nowrap">
@@ -110,7 +122,13 @@
                     @foreach (var row in Model.OtherClaims)
                     {
                         <tr>
-                            <td>@row.ApplicantName</td>
+                            <td>
+                                @row.ApplicantName
+                                @if (row.HasExistingLease)
+                                {
+                                    <span class="badge status-badge status-returned ms-1" data-has-lease="@row.ApplicationId">Has a lease</span>
+                                }
+                            </td>
                             <td>@row.PropertyName &middot; @row.UnitNumber</td>
                             <td>@row.ClaimedBy <span class="small text-muted">since @Date(row.ClaimedAt)</span></td>
                             <td class="text-end">

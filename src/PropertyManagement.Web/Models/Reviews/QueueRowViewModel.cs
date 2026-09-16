@@ -9,4 +9,5 @@ public sealed record QueueRowViewModel
     public DateTime? SubmittedAt { get; init; }
     public string? ClaimedBy { get; init; }
     public DateTime? ClaimedAt { get; init; }
+    public bool HasExistingLease { get; init; }
 }

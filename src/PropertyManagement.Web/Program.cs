@@ -43,6 +43,7 @@ builder.Services.AddScoped<HomeQueries>();
 builder.Services.AddScoped<UnitQueries>();
 builder.Services.AddScoped<ApplicationSectionQueries>();
 builder.Services.AddScoped<ReviewQueries>();
+builder.Services.AddScoped<ExistingLeaseQueries>();
 builder.Services.Configure<FeatureOptions>(builder.Configuration.GetSection(FeatureOptions.SectionName));
 
 builder.Services.AddDbContext<PropertyManagementDbContext>((services, options) =>

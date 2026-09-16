@@ -1,3 +1,4 @@
+using PropertyManagement.Web.Queries;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PropertyManagement.Core.Common;
@@ -19,15 +20,18 @@ public class ReviewsController : Controller
     private readonly ApplicationReviewService _reviewService;
     private readonly ApplicationPageBuilder _pageBuilder;
     private readonly TimeProvider _timeProvider;
+    private readonly ExistingLeaseQueries _existingLeases;
 
     public ReviewsController(
         ApplicationReviewService reviewService,
         ApplicationPageBuilder pageBuilder,
-        TimeProvider timeProvider)
+        TimeProvider timeProvider,
+        ExistingLeaseQueries existingLeases)
     {
         _reviewService = reviewService;
         _pageBuilder = pageBuilder;
         _timeProvider = timeProvider;
+        _existingLeases = existingLeases;
     }
 
     private DateOnly Today => _timeProvider.Today();
@@ -82,7 +86,7 @@ public class ReviewsController : Controller
             return this.DeniedResult(access);
 
         var application = access.Application;
-        var model = NewReviewForm(application);
+        var model = await NewReviewFormAsync(application, cancellationToken);
         model.LeaseStartDate = Today;
 
         if (application.Status != ApplicationStatus.UnderReview || application.ClaimedById != User.Id())
@@ -101,7 +105,7 @@ public class ReviewsController : Controller
         if (access.Application is null)
             return this.DeniedResult(access);
 
-        var form = NewReviewForm(access.Application);
+        var form = await NewReviewFormAsync(access.Application, cancellationToken);
         form.Outcome = model.Outcome;
         form.Comment = model.Comment;
         form.LeaseStartDate = model.LeaseStartDate;
@@ -121,13 +125,14 @@ public class ReviewsController : Controller
         return this.ToModalResult(result, ReviewFormPartial, form);
     }
 
-    private ReviewFormViewModel NewReviewForm(RentalApplication application)
+    private async Task<ReviewFormViewModel> NewReviewFormAsync(RentalApplication application, CancellationToken cancellationToken)
     {
         return new ReviewFormViewModel
         {
             ApplicationId = application.Id,
             UnitLabel = $"{application.Unit.Property.Name} - Unit {application.Unit.UnitNumber}",
-            Today = Today
+            Today = Today,
+            ExistingLeases = await _existingLeases.ForApplicationAsync(application.Id, cancellationToken)
         };
     }
 }

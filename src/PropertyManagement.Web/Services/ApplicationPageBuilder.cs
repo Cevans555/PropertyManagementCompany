@@ -9,6 +9,7 @@ using PropertyManagement.Web.Authorization;
 using PropertyManagement.Web.Models.Applications;
 using PropertyManagement.Web.Models.Applications.Forms;
 using PropertyManagement.Web.Models.Applications.Page;
+using PropertyManagement.Web.Queries;
 
 namespace PropertyManagement.Web.Services;
 
@@ -17,15 +18,18 @@ public sealed class ApplicationPageBuilder
     private readonly PropertyManagementDbContext _db;
     private readonly IAuthorizationService _authorizationService;
     private readonly TimeProvider _timeProvider;
+    private readonly ExistingLeaseQueries _existingLeases;
 
     public ApplicationPageBuilder(
         PropertyManagementDbContext db,
         IAuthorizationService authorizationService,
-        TimeProvider timeProvider)
+        TimeProvider timeProvider,
+        ExistingLeaseQueries existingLeases)
     {
         _db = db;
         _authorizationService = authorizationService;
         _timeProvider = timeProvider;
+        _existingLeases = existingLeases;
     }
 
     public Task<RentalApplication?> LoadAsync(int applicationId, CancellationToken cancellationToken)
@@ -154,6 +158,7 @@ public sealed class ApplicationPageBuilder
             IsApplicantOnApplication = currentApplicant is not null,
             People = people,
             StatusHistory = canReview ? await StatusHistoryAsync(application.Id, cancellationToken) : [],
+            ExistingLeases = canReview ? await _existingLeases.ForApplicationAsync(application.Id, cancellationToken) : [],
             SavedApplicantDetailsErrors = currentApplicant is null ? [] : currentApplicant.GetDetailsErrors(),
             SavedResidenceErrors = application.GetResidenceSectionErrors().Select(e => e.Message).ToList(),
             SubmitBlockers = await SubmitBlockersAsync(application, people, cancellationToken)

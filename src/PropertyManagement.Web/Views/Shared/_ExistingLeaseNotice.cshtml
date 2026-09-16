@@ -1,0 +1,21 @@
+@model IReadOnlyList<ExistingLeaseViewModel>
+@using System.Globalization
+
+@if (Model.Count > 0)
+{
+    var usd = CultureInfo.GetCultureInfo("en-US");
+    <div class="alert alert-warning" role="status" data-existing-lease-notice>
+        <strong>Already holds a lease.</strong>
+        <span>This doesn't block approval. Check whether they're moving or renting a second unit.</span>
+        <ul class="mb-0 mt-1">
+            @foreach (var lease in Model)
+            {
+                <li data-lease-application="@lease.LeaseApplicationId">
+                    @lease.HolderName: @lease.PropertyName &middot; Unit @lease.UnitNumber,
+                    @lease.StartDate.ToString("MMM d, yyyy", usd) to @lease.EndDate.ToString("MMM d, yyyy", usd)
+                    <a class="ms-1 alert-link" asp-controller="Applications" asp-action="Details" asp-route-id="@lease.LeaseApplicationId">View application</a>
+                </li>
+            }
+        </ul>
+    </div>
+}
