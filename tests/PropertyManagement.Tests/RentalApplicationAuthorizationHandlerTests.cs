@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
 using PropertyManagement.Core.Entities;
@@ -8,7 +8,6 @@ using static PropertyManagement.Tests.TestSupport.TestData;
 
 namespace PropertyManagement.Tests;
 
-/// <summary>Who may view, edit, withdraw, review and see notes on one specific application.</summary>
 public class RentalApplicationAuthorizationHandlerTests
 {
     private static readonly ClaimsPrincipal Applicant = User(ApplicantId, Roles.Applicant);

@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
 using PropertyManagement.Core.Entities;
@@ -7,14 +7,6 @@ using PropertyManagement.Core.Security;
 
 namespace PropertyManagement.Web.Authorization;
 
-/// <summary>
-/// Decides what the current user may do with one specific application, in a single place.
-/// The application must be loaded with its Applicants, because ownership is checked against them.
-/// </summary>
-/// <remarks>
-/// Controllers should answer 404 Not Found (not 403) when View fails, so applicants can't discover
-/// which application ids exist.
-/// </remarks>
 public sealed class RentalApplicationAuthorizationHandler
     : AuthorizationHandler<OperationAuthorizationRequirement, RentalApplication>
 {
@@ -41,7 +33,6 @@ public sealed class RentalApplicationAuthorizationHandler
         switch (requirement.Name)
         {
             case nameof(ApplicationOperations.View):
-                // Managers review every application; applicants only see their own.
                 return isManager || isApplicantOnApplication;
             case nameof(ApplicationOperations.Edit):
                 return isApplicantOnApplication && application.IsEditable;

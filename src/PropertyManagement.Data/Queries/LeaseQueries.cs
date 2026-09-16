@@ -1,11 +1,7 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace PropertyManagement.Data.Queries;
 
-/// <summary>
-/// Lease reads the domain can't do itself, because they need the database.
-/// Queries read; services own saving and transactions.
-/// </summary>
 public sealed class LeaseQueries
 {
     private readonly PropertyManagementDbContext _db;
@@ -15,7 +11,6 @@ public sealed class LeaseQueries
         _db = db;
     }
 
-    /// <summary>A unit is unavailable while a lease covers today.</summary>
     public Task<bool> UnitHasActiveLeaseAsync(int unitId, DateOnly today, CancellationToken cancellationToken = default)
     {
         return _db.Leases.AnyAsync(
@@ -23,7 +18,6 @@ public sealed class LeaseQueries
             cancellationToken);
     }
 
-    /// <summary>A lease covering today, or one overlapping the term being approved, blocks approval.</summary>
     public Task<bool> HasConflictingLeaseAsync(
         int unitId, DateOnly startDate, DateOnly endDate, DateOnly today, CancellationToken cancellationToken = default)
     {

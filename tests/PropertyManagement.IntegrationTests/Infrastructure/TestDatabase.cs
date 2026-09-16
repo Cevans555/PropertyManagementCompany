@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using PropertyManagement.Core.Common;
@@ -11,10 +11,6 @@ using PropertyManagement.Data.Services;
 
 namespace PropertyManagement.IntegrationTests.Infrastructure;
 
-/// <summary>
-/// A real LocalDB database for one test class: created from the migrations before the tests run and
-/// dropped afterwards. The database name is unique, so test classes never collide.
-/// </summary>
 public sealed class TestDatabase : IAsyncLifetime
 {
     private readonly string _databaseName = $"PropertyManagementTests_{Guid.NewGuid():N}";
@@ -49,7 +45,6 @@ public sealed class TestDatabase : IAsyncLifetime
         return new ApplicationReviewService(new ApplicationUpdater(db, Clock), new LeaseQueries(db), Clock);
     }
 
-    /// <summary>Creates a user row, so the applicant and manager foreign keys point at something real.</summary>
     public async Task<string> CreateUserAsync(PropertyManagementDbContext db, string role)
     {
         var email = $"{role}-{Guid.NewGuid():N}@test.local";
@@ -70,7 +65,6 @@ public sealed class TestDatabase : IAsyncLifetime
         return user.Id;
     }
 
-    /// <summary>Creates a property with one unit and returns the unit's id.</summary>
     public async Task<int> CreateUnitAsync(PropertyManagementDbContext db)
     {
         var unitType = new UnitType($"Standard-{Guid.NewGuid():N}");
@@ -95,11 +89,8 @@ public sealed class TestDatabase : IAsyncLifetime
         await db.Database.EnsureDeletedAsync();
     }
 
-    /// <summary>
-    /// Identity reads its store options from the application's service provider while building the model.
-    /// The app gets one from AddDbContext; a context built by hand needs the same options, or Identity's
-    /// composite key columns come out as nvarchar(450) instead of the migration's nvarchar(128).
-    /// </summary>
+    /// <summary>Identity reads MaxLengthForKeys from here while building the model; without it the test
+    /// model's key columns are nvarchar(450) and don't match the migration's nvarchar(128).</summary>
     private static IServiceProvider BuildAppServices()
     {
         var services = new ServiceCollection();

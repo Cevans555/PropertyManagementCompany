@@ -1,11 +1,10 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using PropertyManagement.Data;
 
 namespace PropertyManagement.Web.Models.Account;
 
 public class RegisterViewModel
 {
-    /// <summary>Must be one of Roles.All; the server checks it, because the value comes from the form.</summary>
     [Required(ErrorMessage = "Choose whether you are an applicant or a property manager.")]
     [Display(Name = "Account type")]
     public string Role { get; set; } = string.Empty;

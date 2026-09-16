@@ -1,4 +1,4 @@
-using PropertyManagement.Core.Common;
+﻿using PropertyManagement.Core.Common;
 using PropertyManagement.Core.Dtos;
 using PropertyManagement.Core.Validation;
 
@@ -18,8 +18,8 @@ public class Applicant : AuditableEntity
     public string? Phone { get; private set; }
     public string? Email { get; private set; }
 
-    // Current address as separate nullable fields instead of the Address value object. Bonus 4
-    // (SaveInvalidSections) lets this section be saved with errors, so it can hold a partial address, which Address refuses to create.
+    // Separate nullable fields instead of the Address value object: bonus 4 lets this section be saved
+    // with errors, so it can hold a partial address, which Address refuses to create.
     public string? Street { get; private set; }
     public string? City { get; private set; }
     public string? State { get; private set; }

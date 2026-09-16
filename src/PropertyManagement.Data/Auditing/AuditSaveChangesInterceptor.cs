@@ -67,6 +67,7 @@ public sealed class AuditSaveChangesInterceptor : SaveChangesInterceptor
         return HasOwnedChanges(entry);
     }
 
+    // An edited Address is tracked as its own owned entry, so its owner can look unchanged.
     private static bool HasOwnedChanges(EntityEntry entry)
     {
         foreach (var reference in entry.References)

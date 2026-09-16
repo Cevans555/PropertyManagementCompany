@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -34,16 +34,13 @@ builder.Services.AddDbContext<PropertyManagementDbContext>((services, options) =
 });
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-// Identity without its Razor Pages UI: registering, logging in and out are MVC (AccountController).
 builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
     {
-        // There's no email sending in this app, so accounts are usable immediately.
         options.SignIn.RequireConfirmedAccount = false;
         options.User.RequireUniqueEmail = true;
         options.Password.RequiredLength = 8;
-        // Matches what AddDefaultIdentity applied when the schema was created, so the model still agrees
-        // with the migration. It sets the length of Identity's composite key columns (LoginProvider,
-        // ProviderKey, Name); without it they'd widen to nvarchar(450) and need a pointless migration.
+        // Required: AddDefaultIdentity applied this when the schema was scaffolded. Removing it widens
+        // Identity's composite key columns to nvarchar(450) and the app won't start.
         options.Stores.MaxLengthForKeys = 128;
     })
     .AddEntityFrameworkStores<PropertyManagementDbContext>()
@@ -57,15 +54,12 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 builder.Services.AddAuthorizationBuilder()
-    // Every endpoint needs a signed-in user unless it opts out with [AllowAnonymous].
     .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build())
     .AddPolicy(Policies.PropertyManager, policy => policy.RequireRole(Roles.PropertyManager))
     .AddPolicy(Policies.Applicant, policy => policy.RequireRole(Roles.Applicant));
 
-// Decides what a user may do with one specific application (view, edit, withdraw, review, notes).
 builder.Services.AddSingleton<IAuthorizationHandler, RentalApplicationAuthorizationHandler>();
 
-// Every POST is checked for an antiforgery token, without repeating the attribute on each action.
 builder.Services.AddControllersWithViews(options =>
     options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute()));
 
@@ -89,7 +83,6 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// CSS and JS have to load on the login page, before anyone is signed in.
 app.MapStaticAssets().AllowAnonymous();
 
 app.MapControllerRoute(
@@ -99,7 +92,6 @@ app.MapControllerRoute(
 
 app.Run();
 
-/// <summary>Exposed so integration tests can host the app with WebApplicationFactory&lt;Program&gt;.</summary>
 public partial class Program
 {
 }

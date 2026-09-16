@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using PropertyManagement.Core.Security;
@@ -7,7 +7,6 @@ using PropertyManagement.Web.Models.Account;
 
 namespace PropertyManagement.Web.Controllers;
 
-/// <summary>Registering, logging in and logging out. Identity's own Razor Pages UI isn't used.</summary>
 public class AccountController : Controller
 {
     private readonly UserManager<AppUser> _userManager;
@@ -33,7 +32,6 @@ public class AccountController : Controller
     [AllowAnonymous]
     public async Task<IActionResult> Register(RegisterViewModel model)
     {
-        // The role comes from the form, so it's never trusted: only the two known roles are accepted.
         if (!string.IsNullOrEmpty(model.Role) && !Roles.All.Contains(model.Role))
             ModelState.AddModelError(nameof(model.Role), "Choose whether you are an applicant or a property manager.");
 
@@ -59,7 +57,6 @@ public class AccountController : Controller
         var roleAdded = await _userManager.AddToRoleAsync(user, model.Role);
         if (!roleAdded.Succeeded)
         {
-            // Don't leave behind an account with no role, which couldn't do anything.
             await _userManager.DeleteAsync(user);
             AddErrors(roleAdded);
             return View(model);
@@ -91,7 +88,6 @@ public class AccountController : Controller
 
         if (result.Succeeded)
         {
-            // Only redirect inside this site, so a crafted returnUrl can't send users elsewhere.
             if (Url.IsLocalUrl(model.ReturnUrl))
                 return LocalRedirect(model.ReturnUrl!);
 
