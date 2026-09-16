@@ -1,14 +1,10 @@
-using Microsoft.AspNetCore.Hosting;
+﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using PropertyManagement.Data;
 
 namespace PropertyManagement.IntegrationTests.Infrastructure;
 
-/// <summary>
-/// Hosts the real app in memory against its own LocalDB database. Starting the host runs the app's normal
-/// startup, which creates, migrates and seeds that database; it's deleted when the test run finishes.
-/// </summary>
 public class PropertyManagementWebFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     private readonly string _databaseName = $"PropertyManagement_Tests_{Guid.NewGuid():N}";
@@ -39,7 +35,6 @@ public class PropertyManagementWebFactory : WebApplicationFactory<Program>, IAsy
         await DisposeAsync();
     }
 
-    /// <summary>A client that keeps cookies and doesn't follow redirects, so tests can assert on them.</summary>
     public HttpClient CreateBrowserClient()
     {
         return CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false, HandleCookies = true });

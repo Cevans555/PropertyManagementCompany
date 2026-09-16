@@ -37,6 +37,12 @@ References point toward Core: Web → Core, Data; Data → Core; Tests → Core.
 
 **Queries vs services.** `Data/Queries` holds reusable or specialized reads, like the lease availability checks shared by starting, submitting and approving. Services own saving and transactions. A one-line existence check inside a service stays there rather than becoming a class of its own.
 
+**Modal pattern.** Create, edit and remove happen in one shared modal in the layout, driven by `wwwroot/js/modal.js`:
+
+- A trigger carries `data-modal-url` (the partial to load) and `data-modal-refresh` (the page sections to reload afterwards).
+- `GET` returns a form partial. A failed `POST` returns **422** with the same partial re-rendered with its validation errors, so the modal updates in place. A successful `POST` returns JSON, so the modal closes and each refresh target reloads from its own `data-refresh-url`.
+- Controllers express that with two helpers, `ModalInvalid` and `ModalSuccess`, and view components (`PropertyList`, `UnitTable`) both render a section and serve its refresh URL, so the markup exists once.
+
 **Expected failures aren't exceptions.** Services return a `ServiceResult`, so a broken rule, a stale save or a deadlock becomes a message a page can show.
 
 **Testing.** Domain rules are covered by fast unit tests with no database. The services are covered by integration tests against a real LocalDB database, because what's worth proving there (concurrency tokens, the serializable approval transaction, EF includes) only behaves correctly against real SQL Server.

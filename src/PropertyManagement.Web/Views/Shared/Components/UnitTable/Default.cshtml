@@ -50,12 +50,12 @@ else
                         <td class="text-end">@unit.ApplicationCount</td>
                         <td class="text-end text-nowrap">
                             <button type="button" class="btn btn-sm btn-outline-secondary"
-                                    data-modal-url="@Url.Action("EditUnit", "Properties", new { id = unit.Id })"
+                                    data-modal-url="@Url.Action("Edit", "Units", new { id = unit.Id })"
                                     data-modal-refresh="#unit-table">
                                 Edit
                             </button>
                             <button type="button" class="btn btn-sm btn-outline-danger"
-                                    data-modal-url="@Url.Action("DeleteUnit", "Properties", new { id = unit.Id })"
+                                    data-modal-url="@Url.Action("Delete", "Units", new { id = unit.Id })"
                                     data-modal-refresh="#unit-table">
                                 Remove
                             </button>

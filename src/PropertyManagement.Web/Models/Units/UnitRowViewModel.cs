@@ -1,4 +1,4 @@
-namespace PropertyManagement.Web.Models.Properties;
+namespace PropertyManagement.Web.Models.Units;
 
 public sealed record UnitRowViewModel(
     int Id,

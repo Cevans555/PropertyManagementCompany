@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,10 +29,6 @@ public static partial class TestHelpers
         return client;
     }
 
-    /// <summary>
-    /// Loads the token page to get an antiforgery token (and its cookie), as a browser would, then posts
-    /// the fields with that token.
-    /// </summary>
     public static async Task<HttpResponseMessage> PostFormAsync(
         this HttpClient client, string tokenPageUrl, string postUrl, Dictionary<string, string> fields)
     {
@@ -61,10 +57,6 @@ public static partial class TestHelpers
         return WebUtility.HtmlDecode(match.Groups[1].Value);
     }
 
-    /// <summary>
-    /// An application with both sections saved, built through the domain directly (not the UI),
-    /// optionally submitted and claimed.
-    /// </summary>
     public static Task<int> CreateApplicationAsync(
         this PropertyManagementWebFactory factory, int unitId, string applicantId, bool submit = true, string? claimedBy = null)
     {
@@ -89,7 +81,6 @@ public static partial class TestHelpers
         });
     }
 
-    /// <summary>A new property with one available unit, so a test doesn't share units with other tests.</summary>
     public static Task<int> CreateUnitAsync(this PropertyManagementWebFactory factory)
     {
         return factory.QueryDbAsync(async db =>
@@ -116,10 +107,6 @@ public static partial class TestHelpers
         return factory.QueryDbAsync(db => db.Users.Where(u => u.Email == email).Select(u => u.Id).SingleAsync());
     }
 
-    /// <summary>
-    /// Today in the app's business time zone, the same date the app uses for lease and availability rules.
-    /// Don't use the UTC date in tests: after 8 PM Eastern it is already tomorrow.
-    /// </summary>
     public static DateOnly BusinessToday(this PropertyManagementWebFactory factory)
     {
         return factory.Services.GetRequiredService<TimeProvider>().Today();

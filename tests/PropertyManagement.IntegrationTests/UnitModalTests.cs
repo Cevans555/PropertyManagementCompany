@@ -22,7 +22,7 @@ public class UnitModalTests
         var propertyId = await _factory.QueryDbAsync(db => db.Properties.Select(p => p.Id).FirstAsync());
         var inactiveTypeId = await InactiveUnitTypeIdAsync();
 
-        var response = await PostUnitAsync(client, $"/Properties/CreateUnit?propertyId={propertyId}", "999", inactiveTypeId);
+        var response = await PostUnitAsync(client, $"/Units/Create?propertyId={propertyId}", "999", inactiveTypeId);
 
         Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
         Assert.Contains("inactive", await response.Content.ReadAsStringAsync());
@@ -34,7 +34,7 @@ public class UnitModalTests
         var client = await _factory.CreateSignedInClientAsync(TestAccounts.Manager);
         var propertyId = await _factory.QueryDbAsync(db => db.Properties.Select(p => p.Id).FirstAsync());
 
-        var html = await client.GetStringAsync($"/Properties/CreateUnit?propertyId={propertyId}");
+        var html = await client.GetStringAsync($"/Units/Create?propertyId={propertyId}");
 
         Assert.Contains("Studio", html);
         Assert.DoesNotContain("(inactive)", html);
@@ -46,8 +46,8 @@ public class UnitModalTests
         var client = await _factory.CreateSignedInClientAsync(TestAccounts.Manager);
         var unit = await _factory.QueryDbAsync(db => db.Units.AsNoTracking().FirstAsync(u => !u.UnitType.IsActive));
 
-        var form = await client.GetStringAsync($"/Properties/EditUnit/{unit.Id}");
-        var response = await PostUnitAsync(client, $"/Properties/EditUnit/{unit.Id}", unit.UnitNumber, unit.UnitTypeId, rent: 2345m);
+        var form = await client.GetStringAsync($"/Units/Edit/{unit.Id}");
+        var response = await PostUnitAsync(client, $"/Units/Edit/{unit.Id}", unit.UnitNumber, unit.UnitTypeId, rent: 2345m);
 
         Assert.Contains("(inactive)", form);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -62,7 +62,7 @@ public class UnitModalTests
         var client = await _factory.CreateSignedInClientAsync(TestAccounts.Manager);
         var unit = await _factory.QueryDbAsync(db => db.Units.AsNoTracking().FirstAsync(u => u.UnitType.IsActive));
 
-        var response = await PostUnitAsync(client, $"/Properties/EditUnit/{unit.Id}", unit.UnitNumber, await InactiveUnitTypeIdAsync());
+        var response = await PostUnitAsync(client, $"/Units/Edit/{unit.Id}", unit.UnitNumber, await InactiveUnitTypeIdAsync());
 
         Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
         var saved = await _factory.QueryDbAsync(db => db.Units.AsNoTracking().SingleAsync(u => u.Id == unit.Id));
@@ -76,7 +76,7 @@ public class UnitModalTests
         var existing = await _factory.QueryDbAsync(db => db.Units.AsNoTracking().FirstAsync());
 
         var response = await PostUnitAsync(
-            client, $"/Properties/CreateUnit?propertyId={existing.PropertyId}", existing.UnitNumber, await ActiveUnitTypeIdAsync());
+            client, $"/Units/Create?propertyId={existing.PropertyId}", existing.UnitNumber, await ActiveUnitTypeIdAsync());
 
         Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
         Assert.Contains("already exists", await response.Content.ReadAsStringAsync());
@@ -88,7 +88,19 @@ public class UnitModalTests
         var client = await _factory.CreateSignedInClientAsync(TestAccounts.Manager);
         var unitId = await _factory.QueryDbAsync(db => db.RentalApplications.Select(a => a.UnitId).FirstAsync());
 
-        var response = await client.PostFormAsync($"/Properties/DeleteUnit/{unitId}", $"/Properties/DeleteUnit/{unitId}", new());
+        var response = await client.PostFormAsync($"/Units/Delete/{unitId}", $"/Units/Delete/{unitId}", new());
+
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
+        Assert.True(await _factory.QueryDbAsync(db => db.Units.AnyAsync(u => u.Id == unitId)));
+    }
+
+    [Fact]
+    public async Task DeleteUnit_WithALease_IsRefused()
+    {
+        var client = await _factory.CreateSignedInClientAsync(TestAccounts.Manager);
+        var unitId = await _factory.QueryDbAsync(db => db.Leases.Select(l => l.UnitId).FirstAsync());
+
+        var response = await client.PostFormAsync($"/Units/Delete/{unitId}", $"/Units/Delete/{unitId}", new());
 
         Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
         Assert.True(await _factory.QueryDbAsync(db => db.Units.AnyAsync(u => u.Id == unitId)));
@@ -101,16 +113,16 @@ public class UnitModalTests
         var propertyId = await _factory.QueryDbAsync(db => db.Properties.Select(p => p.Id).FirstAsync());
         var unitNumber = $"T{Random.Shared.Next(1000, 9999)}";
 
-        var created = await PostUnitAsync(client, $"/Properties/CreateUnit?propertyId={propertyId}", unitNumber, await ActiveUnitTypeIdAsync());
+        var created = await PostUnitAsync(client, $"/Units/Create?propertyId={propertyId}", unitNumber, await ActiveUnitTypeIdAsync());
         Assert.Equal(HttpStatusCode.OK, created.StatusCode);
-        Assert.Contains(unitNumber, await client.GetStringAsync($"/Properties/Units/{propertyId}"));
+        Assert.Contains(unitNumber, await client.GetStringAsync($"/Units/Table/{propertyId}"));
 
         var unitId = await _factory.QueryDbAsync(db =>
             db.Units.Where(u => u.PropertyId == propertyId && u.UnitNumber == unitNumber).Select(u => u.Id).SingleAsync());
-        var deleted = await client.PostFormAsync($"/Properties/DeleteUnit/{unitId}", $"/Properties/DeleteUnit/{unitId}", new());
+        var deleted = await client.PostFormAsync($"/Units/Delete/{unitId}", $"/Units/Delete/{unitId}", new());
 
         Assert.Equal(HttpStatusCode.OK, deleted.StatusCode);
-        Assert.DoesNotContain(unitNumber, await client.GetStringAsync($"/Properties/Units/{propertyId}"));
+        Assert.DoesNotContain(unitNumber, await client.GetStringAsync($"/Units/Table/{propertyId}"));
     }
 
     [Fact]
@@ -119,7 +131,7 @@ public class UnitModalTests
         var client = await _factory.CreateSignedInClientAsync(TestAccounts.Applicant);
         var propertyId = await _factory.QueryDbAsync(db => db.Properties.Select(p => p.Id).FirstAsync());
 
-        var response = await client.PostFormAsync("/", $"/Properties/CreateUnit?propertyId={propertyId}", new()
+        var response = await client.PostFormAsync("/", $"/Units/Create?propertyId={propertyId}", new()
         {
             ["UnitNumber"] = "X1",
             ["Bedrooms"] = "1",

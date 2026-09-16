@@ -16,13 +16,13 @@
         <p class="text-muted mb-0">@Model.Street, @Model.City, @Model.State @Model.PostalCode</p>
     </div>
     <button type="button" class="btn btn-primary"
-            data-modal-url="@Url.Action("CreateUnit", new { propertyId = Model.Id })"
+            data-modal-url="@Url.Action("Create", "Units", new { propertyId = Model.Id })"
             data-modal-refresh="#unit-table">
         Add unit
     </button>
 </div>
 
-<div id="unit-table" data-refresh-url="@Url.Action("Units", new { id = Model.Id })">
+<div id="unit-table" data-refresh-url="@Url.Action("Table", "Units", new { id = Model.Id })">
     @await Component.InvokeAsync("UnitTable", new { propertyId = Model.Id })
 </div>
 

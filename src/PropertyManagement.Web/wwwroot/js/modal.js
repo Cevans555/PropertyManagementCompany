@@ -1,8 +1,4 @@
-// Modal pattern used across the app:
-//   <button data-modal-url="/Properties/Create" data-modal-refresh="#property-list">   opens a partial
-//   <div id="property-list" data-refresh-url="/Properties/List">                        reloads itself after success
-// A POST answering with JSON closes the modal; HTML (422) is re-rendered in place with validation errors.
-(() => {
+﻿(() => {
     const modalElement = document.getElementById('app-modal');
     if (!modalElement || !window.bootstrap) return;
 

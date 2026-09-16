@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PropertyManagement.Core.Common;
 using PropertyManagement.Data;
-using PropertyManagement.Web.Models.Properties;
+using PropertyManagement.Web.Models.Units;
 
 namespace PropertyManagement.Web.ViewComponents;
 

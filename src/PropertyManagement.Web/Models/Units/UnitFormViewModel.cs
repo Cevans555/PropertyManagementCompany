@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using PropertyManagement.Core.Dtos;
 using PropertyManagement.Core.Entities;
 
-namespace PropertyManagement.Web.Models.Properties;
+namespace PropertyManagement.Web.Models.Units;
 
 public class UnitFormViewModel
 {
