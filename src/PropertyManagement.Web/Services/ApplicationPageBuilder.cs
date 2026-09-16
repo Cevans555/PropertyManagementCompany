@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -26,7 +26,6 @@ public sealed class ApplicationPageBuilder
         _timeProvider = timeProvider;
     }
 
-    /// <summary>Loads everything the authorization handler and the page need, without tracking.</summary>
     public Task<RentalApplication?> LoadAsync(int applicationId, CancellationToken cancellationToken)
     {
         return _db.RentalApplications
@@ -46,10 +45,6 @@ public sealed class ApplicationPageBuilder
         return result.Succeeded;
     }
 
-    /// <param name="posted">
-    /// The posted model when re-displaying the applicant section after a failed save, so the user's input and
-    /// the row version they loaded are kept. Null to show saved values.
-    /// </param>
     public async Task<ApplicationPageViewModel> BuildAsync(
         RentalApplication application,
         ApplicationSection section,
@@ -159,7 +154,6 @@ public sealed class ApplicationPageBuilder
             .ToListAsync(cancellationToken);
     }
 
-    /// <summary>Everything stopping submission, listed on the Summary using the same rules Submit checks.</summary>
     private async Task<IReadOnlyList<SubmitBlocker>> SubmitBlockersAsync(
         RentalApplication application, IReadOnlyList<ApplicantPersonViewModel> people, CancellationToken cancellationToken)
     {

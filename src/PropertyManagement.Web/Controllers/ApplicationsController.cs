@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
@@ -89,10 +89,6 @@ public class ApplicationsController : Controller
         return View(page);
     }
 
-    /// <summary>
-    /// The application form's single POST. The clicked button decides what happens: Continue validates and saves
-    /// the current section, Back never saves, and Submit only works from the Summary.
-    /// </summary>
     [HttpPost]
     public async Task<IActionResult> Details(int id, ApplicationPageViewModel model, string? command, CancellationToken cancellationToken)
     {
@@ -298,10 +294,6 @@ public class ApplicationsController : Controller
         return ToModalResult(result, ConfirmPartial, WithdrawConfirmation(id));
     }
 
-    /// <summary>
-    /// An application the user can't view is reported as 404 so ids can't be probed; one they can view but not
-    /// change this way is 403.
-    /// </summary>
     private async Task<(RentalApplication? Application, IActionResult? Denied)> LoadAuthorizedAsync(
         int applicationId, OperationAuthorizationRequirement operation, CancellationToken cancellationToken)
     {
@@ -343,7 +335,6 @@ public class ApplicationsController : Controller
         return result;
     }
 
-    /// <summary>Only the current section is validated; the form doesn't post the other sections' fields.</summary>
     private void KeepModelStateFor(string prefix)
     {
         foreach (var key in ModelState.Keys.Where(k => !k.StartsWith(prefix + ".", StringComparison.Ordinal)).ToList())

@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PropertyManagement.Core.Common;
 using PropertyManagement.Core.Dtos;
 using PropertyManagement.Core.Entities;
@@ -67,10 +67,6 @@ public sealed class RentalApplicationService
         return _updater.ApplyAsync(applicationId, (application, now) => application.Withdraw(applicantUserId, now), cancellationToken);
     }
 
-    /// <param name="expectedRowVersion">
-    /// The applicant row's version when the page was loaded. A different current version means someone saved
-    /// this section since, so the save is rejected as stale instead of overwriting their changes.
-    /// </param>
     public Task<ServiceResult> SaveApplicantDetailsAsync(
         int applicationId, string applicantUserId, ApplicantDetails details, byte[] expectedRowVersion,
         CancellationToken cancellationToken = default)
@@ -128,7 +124,6 @@ public sealed class RentalApplicationService
         }, cancellationToken);
     }
 
-    /// <summary>Adds an existing Applicant account, found by email, to the application.</summary>
     public async Task<ServiceResult> AddCoApplicantAsync(
         int applicationId, string actingUserId, string email, CancellationToken cancellationToken = default)
     {
@@ -148,8 +143,6 @@ public sealed class RentalApplicationService
             applicationId, (application, _) => application.AddApplicant(actingUserId, coApplicantId), cancellationToken);
     }
 
-    // The page posts the section version it was loaded with. Checking it here catches edits made since;
-    // the concurrency token on the row still catches a save that races this check.
     private static void EnsureResidenceSectionVersion(RentalApplication application, Guid expected)
     {
         if (application.ResidenceSectionVersion != expected)

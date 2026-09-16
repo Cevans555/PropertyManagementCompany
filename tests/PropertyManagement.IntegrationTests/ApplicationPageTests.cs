@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Net;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
@@ -7,10 +7,6 @@ using PropertyManagement.IntegrationTests.Infrastructure;
 
 namespace PropertyManagement.IntegrationTests;
 
-/// <summary>
-/// The rental application page: one page, one section at a time, one form posting to one action where the
-/// clicked button decides what happens.
-/// </summary>
 [Collection(WebCollection.Name)]
 public partial class ApplicationPageTests
 {
@@ -292,6 +288,49 @@ public partial class ApplicationPageTests
         Assert.Equal(ApplicationStatus.Withdrawn, await StatusAsync(applicationId));
     }
 
+    [Fact]
+    public async Task ConcurrentSavesToDifferentSections_BothSucceed()
+    {
+        var (client, applicationId) = await StartApplicationAsync();
+        var addUrl = $"/Applications/AddCoApplicant?applicationId={applicationId}";
+        Assert.Equal(
+            HttpStatusCode.OK,
+            (await client.PostFormAsync(addUrl, addUrl, new() { ["Email"] = TestAccounts.OtherApplicant })).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await AddResidenceAsync(client, applicationId)).StatusCode);
+
+        var coApplicant = await _factory.CreateSignedInClientAsync(TestAccounts.OtherApplicant);
+
+        var coApplicantPage = await coApplicant.GetStringAsync($"/Applications/Details/{applicationId}?section=Applicant");
+        var coRowVersion = TestHelpers.HiddenValue(coApplicantPage, "ApplicantRowVersion");
+        var residencePage = await client.GetStringAsync($"/Applications/Details/{applicationId}?section=Residences");
+        var residenceVersion = TestHelpers.HiddenValue(residencePage, "ResidenceSectionVersion");
+
+        var coApplicantSave = await coApplicant.PostFormWithTokenAsync(
+            coApplicantPage, $"/Applications/Details/{applicationId}", ApplicantFields(coRowVersion, "Alex"));
+
+        var residenceSave = await client.PostFormWithTokenAsync(residencePage, $"/Applications/Details/{applicationId}", new()
+        {
+            ["Section"] = "Residences",
+            ["command"] = ApplicationCommandValues.Continue,
+            ["ResidenceSectionVersion"] = residenceVersion
+        });
+
+        Assert.Equal(HttpStatusCode.Redirect, coApplicantSave.StatusCode);
+        Assert.Equal(HttpStatusCode.Redirect, residenceSave.StatusCode);
+
+        var coApplicantFirstName = await _factory.QueryDbAsync(db => db.Applicants
+            .Where(a => a.RentalApplicationId == applicationId && !a.IsPrimary)
+            .Select(a => a.FirstName)
+            .SingleAsync());
+        var residenceSectionSavedAt = await _factory.QueryDbAsync(db => db.RentalApplications
+            .Where(a => a.Id == applicationId)
+            .Select(a => a.ResidenceSectionSavedAt)
+            .SingleAsync());
+
+        Assert.Equal("Alex", coApplicantFirstName);
+        Assert.NotNull(residenceSectionSavedAt);
+    }
+
     private static class ApplicationCommandValues
     {
         public const string Continue = "continue";
@@ -347,7 +386,6 @@ public partial class ApplicationPageTests
         });
     }
 
-    /// <summary>Posts the application form for a section, the way the page does, with its current versions.</summary>
     private static async Task<HttpResponseMessage> PostCommandAsync(
         HttpClient client, int applicationId, string section, string command, Dictionary<string, string>? extraFields = null)
     {

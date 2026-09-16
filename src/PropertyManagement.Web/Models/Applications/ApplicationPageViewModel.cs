@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc.ModelBinding;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using PropertyManagement.Core.Validation;
 
@@ -10,10 +10,8 @@ public class ApplicationPageViewModel
 
     public ApplicantDetailsFormModel ApplicantDetails { get; set; } = new();
 
-    /// <summary>Base64 row version of the current user's applicant row, for stale-save detection.</summary>
     public string? ApplicantRowVersion { get; set; }
 
-    /// <summary>Version of the shared Residence History section, for stale-save detection.</summary>
     public Guid ResidenceSectionVersion { get; set; }
 
     [BindNever]
