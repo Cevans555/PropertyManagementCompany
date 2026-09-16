@@ -1,5 +1,4 @@
 @model HomePageViewModel
-@inject IWebHostEnvironment Environment
 @{
     ViewData["Title"] = "Home";
 }
@@ -46,24 +45,6 @@
             </div>
         </div>
     </div>
-
-    @* Demo credentials are a convenience for running this locally, so they are never rendered outside Development. *@
-    @if (Environment.IsDevelopment())
-    {
-        <div class="card mt-3">
-            <div class="card-header">Demo sign-ins</div>
-            <div class="card-body">
-                <p class="card-text text-muted mb-2">
-                    The database is seeded on start-up, so these accounts already exist. Every account uses the password
-                    <code>Password123!</code>.
-                </p>
-                <ul class="mb-0 text-muted">
-                    <li><code>manager1@@demo.com</code> &mdash; property manager</li>
-                    <li><code>applicant1@@demo.com</code> &mdash; applicant</li>
-                </ul>
-            </div>
-        </div>
-    }
 }
 else if (Model.IsManager)
 {

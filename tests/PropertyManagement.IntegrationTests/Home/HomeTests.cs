@@ -25,11 +25,22 @@ public class HomeTests
         Assert.Contains("Rental applications, start to finish", html);
         Assert.Contains("Create an account", html);
 
-        // The demo sign-in card is only rendered in Development. The test host runs as "Testing", so a deployed
-        // environment would not show it either.
+        // Demo credentials live in the README, never in the app, in any environment.
         Assert.DoesNotContain(DbInitializer.DemoPassword, html);
-        Assert.DoesNotContain("Demo sign-ins", html);
         Assert.DoesNotContain(TestAccounts.Manager, html);
+    }
+
+    [Fact]
+    public async Task Login_DoesNotAdvertiseDemoCredentials()
+    {
+        var client = _factory.CreateBrowserClient();
+
+        var html = await client.GetStringAsync("/Account/Login");
+
+        Assert.Contains("Log in", html);
+        Assert.DoesNotContain(DbInitializer.DemoPassword, html);
+        Assert.DoesNotContain(TestAccounts.Manager, html);
+        Assert.DoesNotContain(TestAccounts.Applicant, html);
     }
 
     [Fact]
