@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PropertyManagement.Core.Common;
 using PropertyManagement.Core.Dtos;
@@ -110,6 +111,12 @@ public static partial class TestHelpers
     public static DateOnly BusinessToday(this PropertyManagementWebFactory factory)
     {
         return factory.Services.GetRequiredService<TimeProvider>().Today();
+    }
+
+    public static FeatureOverride EnableSaveInvalidSections(this PropertyManagementWebFactory factory)
+    {
+        var configuration = factory.Services.GetRequiredService<IConfiguration>();
+        return new FeatureOverride(configuration, "Features:SaveInvalidSections", "true");
     }
 
     public static string UniqueName(string prefix)
