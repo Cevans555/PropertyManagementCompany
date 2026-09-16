@@ -1,0 +1,27 @@
+@model NoteFormViewModel
+@{
+    var isNew = Model.Id is null;
+    var postUrl = isNew
+        ? Url.Action("AddNote", "Reviews", new { applicationId = Model.ApplicationId })
+        : Url.Action("EditNote", "Reviews", new { id = Model.Id });
+}
+
+<form method="post" action="@postUrl" asp-antiforgery="true">
+    <div class="modal-header">
+        <h2 class="modal-title fs-5">@(isNew ? "Add note" : "Edit note")</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+
+    <div class="modal-body">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-2" role="alert"></div>
+        <label asp-for="Text" class="form-label"></label>
+        <textarea asp-for="Text" class="form-control" rows="5"></textarea>
+        <div class="form-text">Only property managers can see notes.</div>
+        <span asp-validation-for="Text" class="text-danger"></span>
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-primary">@(isNew ? "Add note" : "Save changes")</button>
+    </div>
+</form>

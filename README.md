@@ -45,6 +45,10 @@ References point toward Core: Web → Core, Data; Data → Core; Tests → Core.
 
 **The application page.** One page shows one section at a time (applicant information, residence history, summary). A single form posts to a single action, and the clicked button decides what happens: Continue validates and saves the current section then moves on, Back never saves, and Submit is only accepted from the summary. The same section partials render editable or read-only from a server-side decision, so the summary reuses them rather than duplicating markup, and a manager viewing an application gets the read-only rendering of the same views.
 
+**Review workflow.** A property manager claims a submitted application from the review queue before completing it, which moves it to Under Review and records who holds it. Only the manager holding it can complete or release the review; anyone else sees who has it. Completing a review is one modal with three outcomes: approve (which creates a 12-month lease from a chosen start date), return, or deny. Return and deny require a comment, and every outcome is recorded in the status history.
+
+**Manager notes.** Notes are their own aggregate rather than part of the application, so loading an application never loads them and an applicant page cannot leak one. The notes endpoints and panel are behind the same `ManageNotes` authorization check, and the author and edit times come from the audit columns rather than being stored again.
+
 **Stale saves.** Two applicants can edit one application at once, so each save carries the version it was loaded with: the applicant's row version for their own section, and a section version for the shared residence list. A save from a stale page is rejected with a message to reload rather than overwriting someone else's work.
 
 **Expected failures aren't exceptions.** Services return a `ServiceResult`, so a broken rule, a stale save or a deadlock becomes a message a page can show.

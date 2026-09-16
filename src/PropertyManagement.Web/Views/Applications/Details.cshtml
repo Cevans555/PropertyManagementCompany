@@ -42,6 +42,11 @@
     <div class="alert alert-danger" role="alert">@errorMessage</div>
 }
 
+@if (Model.CanReview)
+{
+    <partial name="_ReviewActions" model="Model" />
+}
+
 @if (!Model.CanEdit && Model.IsApplicantOnApplication && !Model.Header.Status.IsTerminal())
 {
     <div class="alert alert-secondary" role="status">
@@ -122,6 +127,11 @@ else
             <a class="btn btn-outline-primary ms-auto" asp-action="Details" asp-route-id="@Model.Id" asp-route-section="@Model.Section.Next()">Next</a>
         }
     </div>
+}
+
+@if (Model.CanManageNotes)
+{
+    <partial name="_ManagerNotesPanel" model="Model" />
 }
 
 @section Scripts {

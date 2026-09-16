@@ -26,6 +26,7 @@ builder.Services.AddScoped<ApplicationUpdater>();
 builder.Services.AddScoped<RentalApplicationService>();
 builder.Services.AddScoped<ApplicationReviewService>();
 builder.Services.AddScoped<PropertyService>();
+builder.Services.AddScoped<ManagerNoteService>();
 builder.Services.AddScoped<ApplicationPageBuilder>();
 
 builder.Services.AddDbContext<PropertyManagementDbContext>((services, options) =>
