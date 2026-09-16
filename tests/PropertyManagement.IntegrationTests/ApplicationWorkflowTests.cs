@@ -75,10 +75,8 @@ public class ApplicationWorkflowTests : IClassFixture<TestDatabase>
         var managerId = await _database.CreateUserAsync(db, "manager");
         var unitId = await _database.CreateUnitAsync(db);
 
-        // Both applications reach review first: once a lease exists, a new application for the unit
-        // can't even be started.
         var firstId = await ClaimedAsync(db, applicantId, managerId, unitId);
-        var secondId = await ClaimedAsync(db, applicantId, managerId, unitId, submitWithLeaseCheck: false);
+        var secondId = await ClaimedAsync(db, applicantId, managerId, unitId);
 
         var approved = await _database.ReviewService(db).ApproveAsync(firstId, managerId, _database.Today, null);
         Assert.True(approved.Succeeded, approved.Error);
@@ -99,7 +97,6 @@ public class ApplicationWorkflowTests : IClassFixture<TestDatabase>
         var secondManagerId = await _database.CreateUserAsync(setup, "manager");
         var applicationId = await SubmittedAsync(setup, applicantId);
 
-        // Both managers load the same submitted application, then both claim it.
         await using var firstContext = _database.CreateContext();
         await using var secondContext = _database.CreateContext();
         var first = await firstContext.RentalApplications.SingleAsync(a => a.Id == applicationId);
@@ -123,9 +120,8 @@ public class ApplicationWorkflowTests : IClassFixture<TestDatabase>
         var managerId = await _database.CreateUserAsync(setup, "manager");
         var unitId = await _database.CreateUnitAsync(setup);
         var firstId = await ClaimedAsync(setup, applicantId, managerId, unitId);
-        var secondId = await ClaimedAsync(setup, applicantId, managerId, unitId, submitWithLeaseCheck: false);
+        var secondId = await ClaimedAsync(setup, applicantId, managerId, unitId);
 
-        // Two managers approving at the same moment, each on their own connection.
         await using var firstContext = _database.CreateContext();
         await using var secondContext = _database.CreateContext();
         var firstApproval = _database.ReviewService(firstContext).ApproveAsync(firstId, managerId, _database.Today, null);
@@ -137,16 +133,12 @@ public class ApplicationWorkflowTests : IClassFixture<TestDatabase>
         Assert.Equal(1, await check.Leases.CountAsync(l => l.UnitId == unitId));
     }
 
-    // ---- Helpers -----------------------------------------------------------------------------
-
     private async Task<int> ReadyToSubmitAsync(PropertyManagementDbContext db, string applicantId, int? unitId = null)
     {
         var id = unitId ?? await _database.CreateUnitAsync(db);
         var started = await _database.ApplicantService(db).StartAsync(id, applicantId);
         Assert.True(started.Succeeded, started.Error);
 
-        // The section-saving service methods arrive with the application page, so fill the sections
-        // through the domain methods for now.
         var application = await db.RentalApplications
             .Include(a => a.Applicants)
             .Include(a => a.Residences)
@@ -168,31 +160,12 @@ public class ApplicationWorkflowTests : IClassFixture<TestDatabase>
         return applicationId;
     }
 
-    /// <param name="submitWithLeaseCheck">
-    /// False for a second application on a unit that already has a lease: Submit would refuse, so the
-    /// domain methods are used directly to reach Under Review.
-    /// </param>
-    private async Task<int> ClaimedAsync(
-        PropertyManagementDbContext db, string applicantId, string managerId, int? unitId = null, bool submitWithLeaseCheck = true)
+    private async Task<int> ClaimedAsync(PropertyManagementDbContext db, string applicantId, string managerId, int? unitId = null)
     {
-        if (submitWithLeaseCheck)
-        {
-            var applicationId = await SubmittedAsync(db, applicantId, unitId);
-            var claimed = await _database.ReviewService(db).ClaimAsync(applicationId, managerId);
-            Assert.True(claimed.Succeeded, claimed.Error);
-            return applicationId;
-        }
-
-        var readyId = await ReadyToSubmitAsync(db, applicantId, unitId);
-        var application = await db.RentalApplications
-            .Include(a => a.Applicants)
-            .Include(a => a.Residences)
-            .SingleAsync(a => a.Id == readyId);
-
-        application.Submit(applicantId, unitHasActiveLease: false, DateTime.UtcNow);
-        application.Claim(managerId, DateTime.UtcNow);
-        await db.SaveChangesAsync();
-        return readyId;
+        var applicationId = await SubmittedAsync(db, applicantId, unitId);
+        var claimed = await _database.ReviewService(db).ClaimAsync(applicationId, managerId);
+        Assert.True(claimed.Succeeded, claimed.Error);
+        return applicationId;
     }
 
     private async Task<RentalApplication> ReloadAsync(int applicationId)
