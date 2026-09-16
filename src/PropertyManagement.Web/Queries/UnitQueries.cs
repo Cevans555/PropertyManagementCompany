@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using PropertyManagement.Core.Common;
 using PropertyManagement.Core.Enums;
 using PropertyManagement.Data;
-using PropertyManagement.Web.Models.Applications;
 using PropertyManagement.Web.Models.Units;
 
 namespace PropertyManagement.Web.Queries;

@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using PropertyManagement.Core.Dtos;
 using PropertyManagement.Core.Validation;
 
-namespace PropertyManagement.Web.Models.Applications;
+namespace PropertyManagement.Web.Models.Applications.Forms;
 
 public class ApplicantDetailsFormModel : IValidatableObject
 {

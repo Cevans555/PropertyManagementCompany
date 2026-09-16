@@ -60,7 +60,7 @@ public class PropertiesController : Controller
             return this.ModalInvalid(PropertyFormPartial, model);
 
         var result = await _propertyService.CreatePropertyAsync(model.ToDetails(), cancellationToken);
-        return ToModalResult(result, PropertyFormPartial, model);
+        return this.ToModalResult(result, PropertyFormPartial, model);
     }
 
     [HttpGet]
@@ -82,7 +82,7 @@ public class PropertiesController : Controller
             return this.ModalInvalid(PropertyFormPartial, model);
 
         var result = await _propertyService.UpdatePropertyAsync(id, model.ToDetails(), cancellationToken);
-        return ToModalResult(result, PropertyFormPartial, model);
+        return this.ToModalResult(result, PropertyFormPartial, model);
     }
 
     [HttpGet]
@@ -107,17 +107,9 @@ public class PropertiesController : Controller
         if (model is null)
             return NotFound();
 
-        return ToModalResult(result, DeleteConfirmPartial, model);
+        return this.ToModalResult(result, DeleteConfirmPartial, model);
     }
 
-    private IActionResult ToModalResult(ServiceResult result, string partialViewName, object model)
-    {
-        if (result.Succeeded)
-            return this.ModalSuccess();
-
-        ModelState.AddModelError(string.Empty, result.Error!);
-        return this.ModalInvalid(partialViewName, model);
-    }
 
     private async Task<DeleteConfirmViewModel?> PropertyDeleteModelAsync(int id, CancellationToken cancellationToken)
     {

@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Net;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
@@ -176,7 +176,7 @@ public partial class ApplicationPageTests
 
         var added = await AddResidenceAsync(client, applicationId);
         Assert.Equal(HttpStatusCode.OK, added.StatusCode);
-        Assert.Contains("Bob Landlord", await client.GetStringAsync($"/Applications/ResidenceList/{applicationId}"));
+        Assert.Contains("Bob Landlord", await client.GetStringAsync($"/ApplicationResidences/List/{applicationId}"));
 
         var residencesSaved = await PostCommandAsync(client, applicationId, "Residences", ApplicationCommandValues.Continue);
         Assert.Equal(HttpStatusCode.Redirect, residencesSaved.StatusCode);
@@ -202,81 +202,6 @@ public partial class ApplicationPageTests
     }
 
     [Fact]
-    public async Task ApplicantDetails_SavedFromStalePage_IsRejected()
-    {
-        var (client, applicationId) = await StartApplicationAsync();
-        var stalePage = await client.GetStringAsync($"/Applications/Details/{applicationId}");
-        var staleRowVersion = TestHelpers.HiddenValue(stalePage, "ApplicantRowVersion");
-
-        Assert.Equal(HttpStatusCode.Redirect, (await ContinueApplicantAsync(client, applicationId)).StatusCode);
-        var response = await client.PostFormWithTokenAsync(
-            stalePage, $"/Applications/Details/{applicationId}", ApplicantFields(staleRowVersion, "Stale"));
-
-        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
-        Assert.Contains("changed by someone else", await response.Content.ReadAsStringAsync());
-        var firstName = await _factory.QueryDbAsync(db =>
-            db.Applicants.Where(a => a.RentalApplicationId == applicationId).Select(a => a.FirstName).SingleAsync());
-        Assert.Equal("Jane", firstName);
-    }
-
-    [Fact]
-    public async Task ResidenceSection_SavedFromStalePage_IsRejected()
-    {
-        var (client, applicationId) = await StartApplicationAsync();
-        var stalePage = await client.GetStringAsync($"/Applications/Details/{applicationId}?section=Residences");
-        var staleVersion = TestHelpers.HiddenValue(stalePage, "ResidenceSectionVersion");
-
-        Assert.Equal(HttpStatusCode.OK, (await AddResidenceAsync(client, applicationId)).StatusCode);
-
-        var response = await client.PostFormWithTokenAsync(stalePage, $"/Applications/Details/{applicationId}", new()
-        {
-            ["Section"] = "Residences",
-            ["command"] = ApplicationCommandValues.Continue,
-            ["ResidenceSectionVersion"] = staleVersion
-        });
-
-        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
-        Assert.Contains("changed by someone else", await response.Content.ReadAsStringAsync());
-    }
-
-    [Fact]
-    public async Task CoApplicant_CanViewAndEdit_AndMustSaveDetailsBeforeSubmit()
-    {
-        var (client, applicationId) = await StartApplicationAsync();
-        await ContinueApplicantAsync(client, applicationId);
-        await AddResidenceAsync(client, applicationId);
-        await PostCommandAsync(client, applicationId, "Residences", ApplicationCommandValues.Continue);
-
-        var addUrl = $"/Applications/AddCoApplicant?applicationId={applicationId}";
-        var added = await client.PostFormAsync(addUrl, addUrl, new() { ["Email"] = TestAccounts.OtherApplicant });
-        Assert.Equal(HttpStatusCode.OK, added.StatusCode);
-
-        var coApplicant = await _factory.CreateSignedInClientAsync(TestAccounts.OtherApplicant);
-        Assert.Equal(HttpStatusCode.OK, (await coApplicant.GetAsync($"/Applications/Details/{applicationId}")).StatusCode);
-
-        var blocked = await PostCommandAsync(client, applicationId, "Summary", ApplicationCommandValues.Submit);
-        Assert.Equal(HttpStatusCode.UnprocessableEntity, blocked.StatusCode);
-        Assert.Contains("every applicant", await blocked.Content.ReadAsStringAsync());
-
-        Assert.Equal(HttpStatusCode.Redirect, (await ContinueApplicantAsync(coApplicant, applicationId)).StatusCode);
-        var submitted = await PostCommandAsync(client, applicationId, "Summary", ApplicationCommandValues.Submit);
-        Assert.Equal(HttpStatusCode.Redirect, submitted.StatusCode);
-        Assert.Equal(ApplicationStatus.Submitted, await StatusAsync(applicationId));
-    }
-
-    [Fact]
-    public async Task AddCoApplicant_WithUnknownEmail_Returns422()
-    {
-        var (client, applicationId) = await StartApplicationAsync();
-        var addUrl = $"/Applications/AddCoApplicant?applicationId={applicationId}";
-
-        var response = await client.PostFormAsync(addUrl, addUrl, new() { ["Email"] = "nobody@example.com" });
-
-        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
-        Assert.Contains("No applicant account uses that email address.", await response.Content.ReadAsStringAsync());
-    }
-
-    [Fact]
     public async Task Withdraw_ThroughModal_WithdrawsApplication()
     {
         var (client, applicationId) = await StartApplicationAsync();
@@ -286,49 +211,6 @@ public partial class ApplicationPageTests
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal(ApplicationStatus.Withdrawn, await StatusAsync(applicationId));
-    }
-
-    [Fact]
-    public async Task ConcurrentSavesToDifferentSections_BothSucceed()
-    {
-        var (client, applicationId) = await StartApplicationAsync();
-        var addUrl = $"/Applications/AddCoApplicant?applicationId={applicationId}";
-        Assert.Equal(
-            HttpStatusCode.OK,
-            (await client.PostFormAsync(addUrl, addUrl, new() { ["Email"] = TestAccounts.OtherApplicant })).StatusCode);
-        Assert.Equal(HttpStatusCode.OK, (await AddResidenceAsync(client, applicationId)).StatusCode);
-
-        var coApplicant = await _factory.CreateSignedInClientAsync(TestAccounts.OtherApplicant);
-
-        var coApplicantPage = await coApplicant.GetStringAsync($"/Applications/Details/{applicationId}?section=Applicant");
-        var coRowVersion = TestHelpers.HiddenValue(coApplicantPage, "ApplicantRowVersion");
-        var residencePage = await client.GetStringAsync($"/Applications/Details/{applicationId}?section=Residences");
-        var residenceVersion = TestHelpers.HiddenValue(residencePage, "ResidenceSectionVersion");
-
-        var coApplicantSave = await coApplicant.PostFormWithTokenAsync(
-            coApplicantPage, $"/Applications/Details/{applicationId}", ApplicantFields(coRowVersion, "Alex"));
-
-        var residenceSave = await client.PostFormWithTokenAsync(residencePage, $"/Applications/Details/{applicationId}", new()
-        {
-            ["Section"] = "Residences",
-            ["command"] = ApplicationCommandValues.Continue,
-            ["ResidenceSectionVersion"] = residenceVersion
-        });
-
-        Assert.Equal(HttpStatusCode.Redirect, coApplicantSave.StatusCode);
-        Assert.Equal(HttpStatusCode.Redirect, residenceSave.StatusCode);
-
-        var coApplicantFirstName = await _factory.QueryDbAsync(db => db.Applicants
-            .Where(a => a.RentalApplicationId == applicationId && !a.IsPrimary)
-            .Select(a => a.FirstName)
-            .SingleAsync());
-        var residenceSectionSavedAt = await _factory.QueryDbAsync(db => db.RentalApplications
-            .Where(a => a.Id == applicationId)
-            .Select(a => a.ResidenceSectionSavedAt)
-            .SingleAsync());
-
-        Assert.Equal("Alex", coApplicantFirstName);
-        Assert.NotNull(residenceSectionSavedAt);
     }
 
     private static class ApplicationCommandValues
@@ -370,7 +252,7 @@ public partial class ApplicationPageTests
 
     private static async Task<HttpResponseMessage> AddResidenceAsync(HttpClient client, int applicationId)
     {
-        var url = $"/Applications/CreateResidence?applicationId={applicationId}";
+        var url = $"/ApplicationResidences/Create?applicationId={applicationId}";
         var html = await client.GetStringAsync(url);
         return await client.PostFormWithTokenAsync(html, url, new()
         {

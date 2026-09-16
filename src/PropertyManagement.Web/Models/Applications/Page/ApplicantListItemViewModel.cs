@@ -1,4 +1,4 @@
-namespace PropertyManagement.Web.Models.Applications;
+namespace PropertyManagement.Web.Models.Applications.Page;
 
 public sealed record ApplicantListItemViewModel
 {

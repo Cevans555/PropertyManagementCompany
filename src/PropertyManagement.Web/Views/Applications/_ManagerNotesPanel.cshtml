@@ -4,13 +4,13 @@
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
         <h2 id="notes-heading" class="h5 mb-0">Manager notes</h2>
         <button type="button" class="btn btn-sm btn-outline-primary"
-                data-modal-url="@Url.Action("AddNote", "Reviews", new { applicationId = Model.Id })"
+                data-modal-url="@Url.Action("Add", "ManagerNotes", new { applicationId = Model.Id })"
                 data-modal-refresh="#manager-notes">
             Add note
         </button>
     </div>
     <p class="small text-muted">Internal to property managers. Never shown to applicants.</p>
-    <div id="manager-notes" data-refresh-url="@Url.Action("Notes", "Reviews", new { id = Model.Id })">
+    <div id="manager-notes" data-refresh-url="@Url.Action("List", "ManagerNotes", new { id = Model.Id })">
         @await Component.InvokeAsync("ManagerNotes", new { applicationId = Model.Id })
     </div>
 </section>

@@ -186,27 +186,27 @@ public class ReviewTests
         var applicant = await _factory.CreateSignedInClientAsync(TestAccounts.Applicant);
         var noteText = $"Internal note {Guid.NewGuid():N}";
 
-        var addUrl = $"/Reviews/AddNote?applicationId={applicationId}";
+        var addUrl = $"/ManagerNotes/Add?applicationId={applicationId}";
         Assert.Equal(HttpStatusCode.OK, (await manager.PostFormAsync(addUrl, addUrl, new() { ["Text"] = noteText })).StatusCode);
-        Assert.Contains(noteText, await manager.GetStringAsync($"/Reviews/Notes/{applicationId}"));
+        Assert.Contains(noteText, await manager.GetStringAsync($"/ManagerNotes/List/{applicationId}"));
         Assert.Contains(noteText, await manager.GetStringAsync($"/Applications/Details/{applicationId}"));
 
         foreach (var section in new[] { "Applicant", "Residences", "Summary" })
             Assert.DoesNotContain(noteText, await applicant.GetStringAsync($"/Applications/Details/{applicationId}?section={section}"));
 
-        var applicantNotes = await applicant.GetAsync($"/Reviews/Notes/{applicationId}");
+        var applicantNotes = await applicant.GetAsync($"/ManagerNotes/List/{applicationId}");
         Assert.Equal(HttpStatusCode.Redirect, applicantNotes.StatusCode);
         Assert.Contains("/Account/AccessDenied", applicantNotes.Headers.Location!.OriginalString);
 
         var noteId = await _factory.QueryDbAsync(db => db.ManagerNotes.Where(n => n.Text == noteText).Select(n => n.Id).SingleAsync());
-        var editUrl = $"/Reviews/EditNote/{noteId}";
+        var editUrl = $"/ManagerNotes/Edit/{noteId}";
         Assert.Equal(HttpStatusCode.OK, (await otherManager.PostFormAsync(editUrl, editUrl, new() { ["Text"] = noteText + " (edited)" })).StatusCode);
         var edited = await _factory.QueryDbAsync(db => db.ManagerNotes.AsNoTracking().SingleAsync(n => n.Id == noteId));
         Assert.EndsWith("(edited)", edited.Text);
         Assert.Equal(await _factory.UserIdAsync(TestAccounts.Manager), edited.CreatedById);
         Assert.Equal(await _factory.UserIdAsync(TestAccounts.OtherManager), edited.ModifiedById);
 
-        var deleteUrl = $"/Reviews/DeleteNote/{noteId}";
+        var deleteUrl = $"/ManagerNotes/Delete/{noteId}";
         Assert.Equal(HttpStatusCode.OK, (await manager.PostFormAsync(deleteUrl, deleteUrl, new())).StatusCode);
         Assert.False(await _factory.QueryDbAsync(db => db.ManagerNotes.AnyAsync(n => n.Id == noteId)));
     }
@@ -216,7 +216,7 @@ public class ReviewTests
     {
         var applicationId = await SubmittedApplicationAsync();
         var client = await _factory.CreateSignedInClientAsync(TestAccounts.Manager);
-        var url = $"/Reviews/AddNote?applicationId={applicationId}";
+        var url = $"/ManagerNotes/Add?applicationId={applicationId}";
 
         var response = await client.PostFormAsync(url, url, new() { ["Text"] = "" });
 

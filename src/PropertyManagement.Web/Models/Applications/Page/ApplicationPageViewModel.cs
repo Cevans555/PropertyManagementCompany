@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using PropertyManagement.Web.Models.Applications.Forms;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using PropertyManagement.Core.Validation;
 
-namespace PropertyManagement.Web.Models.Applications;
+namespace PropertyManagement.Web.Models.Applications.Page;
 
 public class ApplicationPageViewModel
 {

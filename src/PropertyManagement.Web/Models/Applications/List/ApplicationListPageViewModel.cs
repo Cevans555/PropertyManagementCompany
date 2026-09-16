@@ -3,7 +3,7 @@ using PropertyManagement.Core.Enums;
 using PropertyManagement.Web.Infrastructure;
 using PropertyManagement.Web.Models.Grid;
 
-namespace PropertyManagement.Web.Models.Applications;
+namespace PropertyManagement.Web.Models.Applications.List;
 
 public sealed record ApplicationListPageViewModel
 {

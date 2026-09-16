@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PropertyManagement.Data;
-using PropertyManagement.Web.Models.Applications;
+using PropertyManagement.Web.Models.Applications.Page;
 
 namespace PropertyManagement.Web.Queries;
 

@@ -9,7 +9,7 @@
         @if (editable)
         {
             <button type="button" class="btn btn-sm btn-outline-primary"
-                    data-modal-url="@Url.Action("CreateResidence", new { applicationId = Model.Id })"
+                    data-modal-url="@Url.Action("Create", "ApplicationResidences", new { applicationId = Model.Id })"
                     data-modal-refresh="#residence-list">
                 Add residence
             </button>
@@ -31,7 +31,7 @@
         }
     }
 
-    <div id="residence-list" data-refresh-url="@Url.Action("ResidenceList", new { id = Model.Id })">
+    <div id="residence-list" data-refresh-url="@Url.Action("List", "ApplicationResidences", new { id = Model.Id })">
         @await Component.InvokeAsync("ResidenceList", new { applicationId = Model.Id, editable })
     </div>
 </section>
