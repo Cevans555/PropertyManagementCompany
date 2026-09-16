@@ -1,4 +1,4 @@
-namespace PropertyManagement.Web.Services;
+namespace PropertyManagement.Web.Queries.Applications;
 
 public enum ApplicationSortField
 {

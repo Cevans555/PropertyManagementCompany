@@ -15,6 +15,7 @@ using PropertyManagement.Data.Services;
 using PropertyManagement.Web.Authorization;
 using PropertyManagement.Web.Infrastructure;
 using PropertyManagement.Web.Queries;
+using PropertyManagement.Web.Queries.Applications;
 using PropertyManagement.Web.Services;
 using Scalar.AspNetCore;
 

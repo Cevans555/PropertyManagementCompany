@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 
-namespace PropertyManagement.Web.Services;
+namespace PropertyManagement.Web.Queries.Applications;
 
 internal static class QueryableSortExtensions
 {
