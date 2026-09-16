@@ -1,0 +1,34 @@
+@model ApplicationListPageViewModel
+@using PropertyManagement.Web.Services
+@{
+    ViewData["Title"] = Model.IsManager ? "Applications" : "My applications";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">@ViewData["Title"]</h1>
+    @if (!Model.IsManager)
+    {
+        <a class="btn btn-outline-primary" asp-action="Available">Browse available units</a>
+    }
+</div>
+
+<form method="get" asp-action="Index" class="row g-2 align-items-end mb-4" role="search" aria-label="Filter applications">
+    <div class="col-sm-4 col-lg-3">
+        <label for="status" class="form-label">Status</label>
+        <select id="status" name="status" class="form-select" asp-items="Model.StatusOptions">
+            <option value="">All statuses</option>
+        </select>
+    </div>
+    <div class="col-sm-4 col-lg-3">
+        <label for="propertyId" class="form-label">Property</label>
+        <select id="propertyId" name="propertyId" class="form-select" asp-items="Model.PropertyOptions">
+            <option value="">All properties</option>
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a class="btn btn-link" asp-action="Index">Clear</a>
+    </div>
+</form>
+
+@await Component.InvokeAsync("ApplicationList", new { filter = new ApplicationListFilter(Model.Status, Model.PropertyId) })

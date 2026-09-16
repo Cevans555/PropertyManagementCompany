@@ -1,9 +1,13 @@
-﻿using System.Security.Claims;
+﻿using System.Globalization;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using PropertyManagement.Core.Entities;
+using PropertyManagement.Core.Enums;
+using PropertyManagement.Core.Security;
 using PropertyManagement.Data;
 using PropertyManagement.Data.Services;
 using PropertyManagement.Web.Authorization;
@@ -39,6 +43,27 @@ public class ApplicationsController : Controller
     }
 
     private string CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+    [HttpGet]
+    public async Task<IActionResult> Index(ApplicationStatus? status, int? propertyId, CancellationToken cancellationToken)
+    {
+        var statusOptions = Enum.GetValues<ApplicationStatus>()
+            .Select(s => new SelectListItem(s.DisplayName(), s.ToString(), s == status))
+            .ToList();
+
+        var properties = await _db.Properties
+            .AsNoTracking()
+            .OrderBy(p => p.Name)
+            .Select(p => new { p.Id, p.Name })
+            .ToListAsync(cancellationToken);
+
+        var propertyOptions = properties
+            .Select(p => new SelectListItem(p.Name, p.Id.ToString(CultureInfo.InvariantCulture), p.Id == propertyId))
+            .ToList();
+
+        return View(new ApplicationListPageViewModel(
+            status, propertyId, User.IsInRole(Roles.PropertyManager), statusOptions, propertyOptions));
+    }
 
     [HttpGet]
     [Authorize(Policy = Policies.Applicant)]
