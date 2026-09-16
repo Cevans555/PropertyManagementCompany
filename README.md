@@ -3,7 +3,20 @@ A web application for submitting and reviewing rental applications.
 
 Built with ASP.NET Core MVC and Razor on .NET 10, using ASP.NET Identity, SQL Server and Entity Framework Core.
 
-## Getting started
+## This is the `extras` branch
+`main` is the assessment submission: the specification plus all five bonuses. This branch builds on it with improvements and edge cases that go beyond the specification. It is never merged into `main`, so the submission stays exactly as reviewed.
+
+It uses its own database, `PropertyManagementCompany_Extras`, so schema changes made here can't clash with a database created from `main`.
+
+### Extras so far
+
+**Existing lease warning.** When anyone on an application — the primary applicant or a co-applicant — already holds another lease that covers today or starts later, property managers see it:
+
+- a notice on the application page and in the review modal, listing each lease (who holds it, the property and unit, the term) with a link to that application
+- a "Has a lease" tag on the application in the review queue
+
+It is a warning, not a rule: someone may be moving between units or renting a second one, so approval is never blocked. Ended leases and the application's own lease don't count, and applicants never see it. The rule lives once in `Web/Queries/ExistingLeaseQueries.cs`; the queue reuses it as a subquery, so the flag is computed in SQL rather than per row. Covered by five integration tests (`Reviews/ExistingLeaseTests.cs`) and one browser test (`ExistingLeaseWarningTests.cs`).
+
 
 ### Prerequisites
 - .NET 10 SDK
