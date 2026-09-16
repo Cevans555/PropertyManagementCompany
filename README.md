@@ -37,6 +37,20 @@ The seed creates `manager1@demo.com` and `manager2@demo.com`, and `applicant1@de
 
 The value is read per request, so changing it takes effect without restarting the app. It's off by default so the app behaves exactly as the base specification describes; turn it on to see the bonus.
 
+### Business time zone
+`Business:TimeZone` in `appsettings.json` (default `America/New_York`) decides what "today" means: whether a lease covers today, so a unit is unavailable, and the earliest lease start date a manager can pick. Dates don't shift with the server's or browser's time zone.
+
+### Tests
+```
+dotnet test
+```
+Runs all three suites. The integration and browser tests create a uniquely named LocalDB database for each run and drop it afterwards. The first browser-test run downloads Playwright's Chromium, so it needs internet access once. To skip the browser tests, run `dotnet test tests/PropertyManagement.Tests` and `dotnet test tests/PropertyManagement.IntegrationTests`.
+
+## Beyond the specification
+Further improvements live on a separate [`extras`](https://github.com/Cevans555/PropertyManagementCompany/tree/extras) branch and are kept out of `main`, so `main` remains the submitted assessment. It has its own database so its schema can move independently.
+
+For example, property managers are warned when anyone on an application already holds another current or upcoming lease — shown on the application page, in the review modal and as a tag in the review queue. It doesn't block approval, since someone may be moving or renting a second unit. The branch's README lists each extra.
+
 ## Solution structure
 ```
 PropertyManagement.slnx
@@ -49,7 +63,7 @@ PropertyManagement.slnx
    ├─ PropertyManagement.IntegrationTests  services and pages against a real LocalDB database
    └─ PropertyManagement.BrowserTests      Playwright smoke tests for the client-side flows
 ```
-References point toward Core: Web → Core, Data; Data → Core; Tests → Core.
+References point toward Core: Web → Data, Core; Data → Core. The unit tests reference Core and Web (for the authorization handler), the integration tests reference all three, and the browser tests build on the integration tests' web factory and helpers.
 
 ## Design notes
 
