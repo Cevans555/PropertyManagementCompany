@@ -1,5 +1,28 @@
+/*
+  A small theme layer over Bootstrap. Everything here either overrides a Bootstrap variable or adds one of the
+  few repeated patterns in the app (page headers, empty states, the section rail). No component is restyled from
+  scratch, so the markup stays ordinary Bootstrap.
+*/
+
+:root {
+  --pm-ink: #1c2434;
+  --pm-muted: #5b6676;
+  --pm-line: #e3e7ed;
+  --pm-surface: #f6f7f9;
+
+  --bs-primary: #2a4d73;
+  --bs-primary-rgb: 42, 77, 115;
+  --bs-link-color: #2a4d73;
+  --bs-link-color-rgb: 42, 77, 115;
+  --bs-link-hover-color: #1d3652;
+  --bs-body-color: var(--pm-ink);
+  --bs-border-color: var(--pm-line);
+}
+
 html {
-  font-size: 14px;
+  position: relative;
+  min-height: 100%;
+  font-size: 15px;
 }
 
 @media (min-width: 768px) {
@@ -8,17 +31,187 @@ html {
   }
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
-}
-
 body {
-  margin-bottom: 60px;
+  background-color: var(--pm-surface);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+main {
+  flex: 1 0 auto;
+}
+
+/* Bootstrap's .btn-primary reads its colours from its own variables, not --bs-primary. */
+.btn-primary {
+  --bs-btn-bg: #2a4d73;
+  --bs-btn-border-color: #2a4d73;
+  --bs-btn-hover-bg: #1d3652;
+  --bs-btn-hover-border-color: #1d3652;
+  --bs-btn-active-bg: #16293e;
+  --bs-btn-active-border-color: #16293e;
+  --bs-btn-disabled-bg: #2a4d73;
+  --bs-btn-disabled-border-color: #2a4d73;
+}
+
+.btn-outline-primary {
+  --bs-btn-color: #2a4d73;
+  --bs-btn-border-color: #2a4d73;
+  --bs-btn-hover-bg: #2a4d73;
+  --bs-btn-hover-border-color: #2a4d73;
+  --bs-btn-active-bg: #2a4d73;
+  --bs-btn-active-border-color: #2a4d73;
+}
+
+/* Header and navigation */
+
+.pm-navbar {
+  background-color: #fff;
+  border-bottom: 1px solid var(--pm-line);
+}
+
+.pm-brand {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--pm-ink);
+}
+
+.pm-navbar .nav-link {
+  color: var(--pm-muted);
+  border-radius: 0.375rem;
+  padding-inline: 0.65rem;
+}
+
+.pm-navbar .nav-link:hover,
+.pm-navbar .nav-link:focus {
+  color: var(--pm-ink);
+  background-color: var(--pm-surface);
+}
+
+.pm-navbar .nav-link.active {
+  color: var(--bs-primary);
+  font-weight: 600;
+  background-color: rgba(42, 77, 115, 0.08);
+}
+
+/* Page headings: one pattern for a title, optional subtitle and right-aligned actions. */
+
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.page-header h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0;
+}
+
+.page-header .page-subtitle {
+  color: var(--pm-muted);
+  margin-top: 0.25rem;
+  margin-bottom: 0;
+}
+
+.page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Surfaces */
+
+.card {
+  border-color: var(--pm-line);
+}
+
+.card > .card-header {
+  background-color: #fff;
+  border-bottom: 1px solid var(--pm-line);
+  font-weight: 600;
+}
+
+.table > thead {
+  color: var(--pm-muted);
+}
+
+.table > thead th {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+/*
+  Tables are the main content of several pages, so the scroll wrapper doubles as their surface. Doing it here
+  keeps every list component's markup as a plain Bootstrap table.
+*/
+
+.table-responsive {
+  background-color: #fff;
+  border: 1px solid var(--pm-line);
+  border-radius: 0.5rem;
+}
+
+.table-responsive > .table {
+  margin-bottom: 0;
+}
+
+.table-responsive > .table > :not(caption) > * > * {
+  padding: 0.75rem 1rem;
+}
+
+.card .table-responsive {
+  border: 0;
+  border-radius: 0;
+}
+
+/* Used wherever a list has nothing in it yet. */
+
+.empty-state {
+  border: 1px dashed var(--pm-line);
+  border-radius: 0.5rem;
+  color: var(--pm-muted);
+  text-align: center;
+  padding: 2.5rem 1rem;
+  margin-bottom: 0;
+  background-color: #fff;
+}
+
+.empty-state-sm {
+  padding: 1.5rem 1rem;
+}
+
+/* The application page's section rail. */
+
+.section-rail .nav-link {
+  color: var(--pm-muted);
+  border: 1px solid transparent;
+}
+
+.section-rail .nav-link.active {
+  color: var(--pm-ink);
+  font-weight: 600;
+  background-color: #fff;
+  border-color: var(--pm-line);
+}
+
+.footer {
+  flex-shrink: 0;
+  border-top: 1px solid var(--pm-line);
+  background-color: #fff;
+  color: var(--pm-muted);
+  font-size: 0.875rem;
+  padding-block: 1rem;
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem #fff, 0 0 0 0.25rem rgba(42, 77, 115, 0.5);
 }
 
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {

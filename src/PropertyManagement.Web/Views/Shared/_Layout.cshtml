@@ -1,19 +1,32 @@
+@{
+    // Marks the nav item for the section being viewed. Matching on the controller alone is enough except for
+    // Applications, where browsing units and the application list are two separate destinations.
+    string NavClass(string controller, string action)
+    {
+        var currentController = ViewContext.RouteData.Values["controller"] as string;
+        var currentAction = ViewContext.RouteData.Values["action"] as string;
+
+        var match = string.Equals(currentController, controller, StringComparison.OrdinalIgnoreCase)
+            && (action == string.Empty || string.Equals(currentAction, action, StringComparison.OrdinalIgnoreCase));
+
+        return match ? "nav-link active" : "nav-link";
+    }
+}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - PropertyManagement.Web</title>
-    <script type="importmap"></script>
+    <title>@ViewData["Title"] &middot; Property Management</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/PropertyManagement.Web.styles.css" asp-append-version="true" />
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">PropertyManagement.Web</a>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm pm-navbar">
+            <div class="container">
+                <a class="navbar-brand pm-brand" asp-area="" asp-controller="Home" asp-action="Index">Property Management</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
@@ -21,46 +34,46 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="@NavClass("Home", "Index")" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
                         </li>
                         @if (User.IsInRole(Roles.Applicant))
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Applications" asp-action="Index">My applications</a>
+                                <a class="@NavClass("Applications", "Index")" asp-area="" asp-controller="Applications" asp-action="Index">My applications</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Applications" asp-action="Available">Available units</a>
+                                <a class="@NavClass("Applications", "Available")" asp-area="" asp-controller="Applications" asp-action="Available">Available units</a>
                             </li>
                         }
                         @if (User.IsInRole(Roles.PropertyManager))
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Applications" asp-action="Index">Applications</a>
+                                <a class="@NavClass("Applications", "Index")" asp-area="" asp-controller="Applications" asp-action="Index">Applications</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Reviews" asp-action="Queue">Review queue</a>
+                                <a class="@NavClass("Reviews", string.Empty)" asp-area="" asp-controller="Reviews" asp-action="Queue">Review queue</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Properties" asp-action="Index">Properties</a>
+                                <a class="@NavClass("Properties", string.Empty)" asp-area="" asp-controller="Properties" asp-action="Index">Properties</a>
                             </li>
                         }
-                        <li class="nav-item">
-                        </li>
                     </ul>
                     <partial name="_LoginPartial" />
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
+
+    <div class="container py-4">
+        <main role="main">
+            <partial name="_FlashMessages" />
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
+    <footer class="footer">
         <div class="container">
-            &copy; 2026 - PropertyManagement.Web
+            Property Management &middot; rental application demo
         </div>
     </footer>
 

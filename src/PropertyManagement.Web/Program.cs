@@ -39,6 +39,7 @@ builder.Services.AddScoped<ManagerNoteService>();
 builder.Services.AddScoped<ApplicationPageBuilder>();
 builder.Services.AddScoped<ApplicationListQuery>();
 builder.Services.AddScoped<PropertyQueries>();
+builder.Services.AddScoped<HomeQueries>();
 builder.Services.AddScoped<UnitQueries>();
 builder.Services.AddScoped<ApplicationSectionQueries>();
 builder.Services.AddScoped<ReviewQueries>();

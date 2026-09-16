@@ -1,0 +1,17 @@
+@using PropertyManagement.Web.Controllers
+@*
+    One-off messages carried across a redirect. Rendered once in the layout so every page shows them the same way,
+    rather than each view repeating the three TempData checks.
+*@
+@if (TempData[ApplicationsController.StatusMessageKey] is string statusMessage)
+{
+    <div class="alert alert-success" role="status">@statusMessage</div>
+}
+@if (TempData[ApplicationsController.WarningMessageKey] is string warningMessage)
+{
+    <div class="alert alert-warning" role="status">@warningMessage</div>
+}
+@if (TempData[ApplicationsController.ErrorMessageKey] is string errorMessage)
+{
+    <div class="alert alert-danger" role="alert">@errorMessage</div>
+}

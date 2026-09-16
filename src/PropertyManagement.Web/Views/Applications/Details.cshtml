@@ -1,6 +1,5 @@
 @model ApplicationPageViewModel
 @using System.Globalization
-@using PropertyManagement.Web.Controllers
 @{
     ViewData["Title"] = $"Application - Unit {Model.Header.UnitNumber}";
     var usd = CultureInfo.GetCultureInfo("en-US");
@@ -13,14 +12,14 @@
     var pageErrors = ViewData.ModelState[string.Empty]?.Errors;
 }
 
-<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+<div class="page-header">
     <div>
-        <h1 class="h3 mb-1">@Model.Header.PropertyName &middot; Unit @Model.Header.UnitNumber</h1>
-        <p class="text-muted mb-0">
+        <h1>@Model.Header.PropertyName &middot; Unit @Model.Header.UnitNumber</h1>
+        <p class="page-subtitle">
             @Model.Header.UnitTypeName &middot; @Model.Header.Bedrooms bedroom(s) &middot; @Model.Header.MonthlyRent.ToString("C0", usd)/month
         </p>
     </div>
-    <div class="d-flex align-items-center gap-2">
+    <div class="page-actions">
         <partial name="_StatusBadge" model="Model.Header.Status" />
         @if (Model.CanWithdraw)
         {
@@ -32,19 +31,6 @@
         }
     </div>
 </div>
-
-@if (TempData[ApplicationsController.StatusMessageKey] is string statusMessage)
-{
-    <div class="alert alert-success" role="status">@statusMessage</div>
-}
-@if (TempData[ApplicationsController.WarningMessageKey] is string warningMessage)
-{
-    <div class="alert alert-warning" role="status">@warningMessage</div>
-}
-@if (TempData[ApplicationsController.ErrorMessageKey] is string errorMessage)
-{
-    <div class="alert alert-danger" role="alert">@errorMessage</div>
-}
 
 @if (Model.CanReview)
 {
@@ -69,7 +55,7 @@
 }
 
 <nav aria-label="Application sections" class="mb-4">
-    <ol class="nav nav-pills">
+    <ol class="nav nav-pills section-rail">
         @foreach (var step in sections)
         {
             var isCurrent = step.Section == Model.Section;
@@ -93,9 +79,13 @@
     <form method="post" asp-action="Details" asp-route-id="@Model.Id">
         <input type="hidden" asp-for="Section" />
 
-        <partial name="_ApplicationSection" model="Model" />
+        <div class="card mb-3">
+            <div class="card-body">
+                <partial name="_ApplicationSection" model="Model" />
+            </div>
+        </div>
 
-        <div class="d-flex gap-2 mt-4 pt-3 border-top">
+        <div class="d-flex gap-2">
             @if (Model.Section == ApplicationSection.Summary)
             {
                 <button type="submit" name="command" value="@ApplicationCommands.Submit" class="btn btn-success ms-auto"
@@ -119,9 +109,13 @@
 }
 else
 {
-    <partial name="_ApplicationSection" model="Model" />
+    <div class="card mb-3">
+        <div class="card-body">
+            <partial name="_ApplicationSection" model="Model" />
+        </div>
+    </div>
 
-    <div class="d-flex gap-2 mt-4 pt-3 border-top">
+    <div class="d-flex gap-2">
         @if (Model.Section != ApplicationSection.Applicant)
         {
             <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.Id" asp-route-section="@Model.Section.Previous()">Back</a>

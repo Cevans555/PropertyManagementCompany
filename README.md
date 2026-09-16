@@ -18,6 +18,16 @@ Open `PropertyManagement.slnx` in Visual Studio and press F5, or run:
 dotnet run --project src/PropertyManagement.Web
 ```
 
+### Demo accounts
+The database is seeded on start-up, so these accounts already exist. They are here rather than in the app, because the application itself never displays credentials.
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Property manager | `manager1@demo.com` | `Password123!` |
+| Applicant | `applicant1@demo.com` | `Password123!` |
+
+The seed creates `manager1@demo.com` and `manager2@demo.com`, and `applicant1@demo.com` through `applicant8@demo.com`, all with the same password. You can also register a new account and choose either role.
+
 ### Feature switches
 `Features` in `src/PropertyManagement.Web/appsettings.json`:
 
