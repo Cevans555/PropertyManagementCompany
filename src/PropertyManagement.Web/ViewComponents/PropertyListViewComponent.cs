@@ -1,42 +1,19 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using PropertyManagement.Core.Common;
-using PropertyManagement.Data;
-using PropertyManagement.Web.Models.Properties;
+using PropertyManagement.Web.Queries;
 
 namespace PropertyManagement.Web.ViewComponents;
 
 public class PropertyListViewComponent : ViewComponent
 {
-    private readonly PropertyManagementDbContext _db;
-    private readonly TimeProvider _timeProvider;
+    private readonly PropertyQueries _queries;
 
-    public PropertyListViewComponent(PropertyManagementDbContext db, TimeProvider timeProvider)
+    public PropertyListViewComponent(PropertyQueries queries)
     {
-        _db = db;
-        _timeProvider = timeProvider;
+        _queries = queries;
     }
 
     public async Task<IViewComponentResult> InvokeAsync()
     {
-        var today = _timeProvider.Today();
-
-        var properties = await _db.Properties
-            .AsNoTracking()
-            .OrderBy(p => p.Name)
-            .Select(p => new PropertyListItemViewModel
-            {
-                Id = p.Id,
-                Name = p.Name,
-                Street = p.Address.Street,
-                City = p.Address.City,
-                State = p.Address.State,
-                PostalCode = p.Address.PostalCode,
-                UnitCount = p.Units.Count(),
-                AvailableUnitCount = p.Units.Count(u => !u.Leases.Any(l => l.StartDate <= today && l.EndDate >= today))
-            })
-            .ToListAsync(HttpContext.RequestAborted);
-
-        return View(properties);
+        return View(await _queries.ListAsync(HttpContext.RequestAborted));
     }
 }

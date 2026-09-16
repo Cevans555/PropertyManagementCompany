@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -14,6 +14,8 @@ using PropertyManagement.Data.Seeding;
 using PropertyManagement.Data.Services;
 using PropertyManagement.Web.Authorization;
 using PropertyManagement.Web.Infrastructure;
+using PropertyManagement.Web.Queries;
+using PropertyManagement.Web.Queries.Applications;
 using PropertyManagement.Web.Services;
 using Scalar.AspNetCore;
 
@@ -27,6 +29,8 @@ builder.Services.AddSingleton<TimeProvider>(new BusinessTimeProvider(businessTim
 builder.Services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
 builder.Services.AddScoped<AuditSaveChangesInterceptor>();
 builder.Services.AddScoped<LeaseQueries>();
+builder.Services.AddScoped<ApplicationQueries>();
+builder.Services.AddScoped<ManagerNoteQueries>();
 builder.Services.AddScoped<ApplicationUpdater>();
 builder.Services.AddScoped<RentalApplicationService>();
 builder.Services.AddScoped<ApplicationReviewService>();
@@ -34,6 +38,10 @@ builder.Services.AddScoped<PropertyService>();
 builder.Services.AddScoped<ManagerNoteService>();
 builder.Services.AddScoped<ApplicationPageBuilder>();
 builder.Services.AddScoped<ApplicationListQuery>();
+builder.Services.AddScoped<PropertyQueries>();
+builder.Services.AddScoped<UnitQueries>();
+builder.Services.AddScoped<ApplicationSectionQueries>();
+builder.Services.AddScoped<ReviewQueries>();
 builder.Services.Configure<FeatureOptions>(builder.Configuration.GetSection(FeatureOptions.SectionName));
 
 builder.Services.AddDbContext<PropertyManagementDbContext>((services, options) =>

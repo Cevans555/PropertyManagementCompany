@@ -1,14 +1,11 @@
-using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using PropertyManagement.Data;
 using PropertyManagement.Data.Services;
 using PropertyManagement.Web.Authorization;
 using PropertyManagement.Web.Infrastructure;
 using PropertyManagement.Web.Models;
 using PropertyManagement.Web.Models.Units;
+using PropertyManagement.Web.Queries;
 
 namespace PropertyManagement.Web.Controllers;
 
@@ -18,12 +15,14 @@ public class UnitsController : Controller
     private const string UnitFormPartial = "_UnitForm";
     private const string DeleteConfirmPartial = "_DeleteConfirm";
 
-    private readonly PropertyManagementDbContext _db;
+    private readonly UnitQueries _units;
+    private readonly PropertyQueries _properties;
     private readonly PropertyService _propertyService;
 
-    public UnitsController(PropertyManagementDbContext db, PropertyService propertyService)
+    public UnitsController(UnitQueries units, PropertyQueries properties, PropertyService propertyService)
     {
-        _db = db;
+        _units = units;
+        _properties = properties;
         _propertyService = propertyService;
     }
 
@@ -36,7 +35,7 @@ public class UnitsController : Controller
     [HttpGet]
     public async Task<IActionResult> Create(int propertyId, CancellationToken cancellationToken)
     {
-        var propertyName = await PropertyNameAsync(propertyId, cancellationToken);
+        var propertyName = await _properties.NameAsync(propertyId, cancellationToken);
         if (propertyName is null)
             return NotFound();
 
@@ -44,7 +43,7 @@ public class UnitsController : Controller
         {
             PropertyId = propertyId,
             PropertyName = propertyName,
-            UnitTypeOptions = await UnitTypeOptionsAsync(currentUnitTypeId: null, cancellationToken)
+            UnitTypeOptions = await _units.TypeOptionsAsync(currentUnitTypeId: null, cancellationToken)
         };
 
         return PartialView(UnitFormPartial, model);
@@ -53,7 +52,7 @@ public class UnitsController : Controller
     [HttpPost]
     public async Task<IActionResult> Create(int propertyId, UnitFormViewModel model, CancellationToken cancellationToken)
     {
-        var propertyName = await PropertyNameAsync(propertyId, cancellationToken);
+        var propertyName = await _properties.NameAsync(propertyId, cancellationToken);
         if (propertyName is null)
             return NotFound();
 
@@ -68,44 +67,25 @@ public class UnitsController : Controller
 
         model.PropertyId = propertyId;
         model.PropertyName = propertyName;
-        model.UnitTypeOptions = await UnitTypeOptionsAsync(currentUnitTypeId: null, cancellationToken);
+        model.UnitTypeOptions = await _units.TypeOptionsAsync(currentUnitTypeId: null, cancellationToken);
         return this.ModalInvalid(UnitFormPartial, model);
     }
 
     [HttpGet]
     public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
     {
-        var model = await _db.Units
-            .AsNoTracking()
-            .Where(u => u.Id == id)
-            .Select(u => new UnitFormViewModel
-            {
-                Id = u.Id,
-                PropertyId = u.PropertyId,
-                PropertyName = u.Property.Name,
-                UnitNumber = u.UnitNumber,
-                Bedrooms = u.Bedrooms,
-                MonthlyRent = u.MonthlyRent,
-                UnitTypeId = u.UnitTypeId
-            })
-            .SingleOrDefaultAsync(cancellationToken);
-
+        var model = await _units.FormAsync(id, cancellationToken);
         if (model is null)
             return NotFound();
 
-        model.UnitTypeOptions = await UnitTypeOptionsAsync(model.UnitTypeId, cancellationToken);
+        model.UnitTypeOptions = await _units.TypeOptionsAsync(model.UnitTypeId, cancellationToken);
         return PartialView(UnitFormPartial, model);
     }
 
     [HttpPost]
     public async Task<IActionResult> Edit(int id, UnitFormViewModel model, CancellationToken cancellationToken)
     {
-        var current = await _db.Units
-            .AsNoTracking()
-            .Where(u => u.Id == id)
-            .Select(u => new { u.PropertyId, PropertyName = u.Property.Name, u.UnitTypeId })
-            .SingleOrDefaultAsync(cancellationToken);
-
+        var current = await _units.FormContextAsync(id, cancellationToken);
         if (current is null)
             return NotFound();
 
@@ -121,7 +101,7 @@ public class UnitsController : Controller
         model.Id = id;
         model.PropertyId = current.PropertyId;
         model.PropertyName = current.PropertyName;
-        model.UnitTypeOptions = await UnitTypeOptionsAsync(current.UnitTypeId, cancellationToken);
+        model.UnitTypeOptions = await _units.TypeOptionsAsync(current.UnitTypeId, cancellationToken);
         return this.ModalInvalid(UnitFormPartial, model);
     }
 
@@ -151,38 +131,9 @@ public class UnitsController : Controller
         return this.ModalInvalid(DeleteConfirmPartial, model);
     }
 
-    private Task<string?> PropertyNameAsync(int propertyId, CancellationToken cancellationToken)
-    {
-        return _db.Properties
-            .Where(p => p.Id == propertyId)
-            .Select(p => p.Name)
-            .SingleOrDefaultAsync(cancellationToken);
-    }
-
-    private async Task<IReadOnlyList<SelectListItem>> UnitTypeOptionsAsync(int? currentUnitTypeId, CancellationToken cancellationToken)
-    {
-        var unitTypes = await _db.UnitTypes
-            .AsNoTracking()
-            .Where(t => t.IsActive || t.Id == currentUnitTypeId)
-            .OrderBy(t => t.Name)
-            .Select(t => new { t.Id, t.Name, t.IsActive })
-            .ToListAsync(cancellationToken);
-
-        return unitTypes
-            .Select(t => new SelectListItem(
-                t.IsActive ? t.Name : $"{t.Name} (inactive)",
-                t.Id.ToString(CultureInfo.InvariantCulture)))
-            .ToList();
-    }
-
     private async Task<DeleteConfirmViewModel?> UnitDeleteModelAsync(int id, CancellationToken cancellationToken)
     {
-        var unit = await _db.Units
-            .AsNoTracking()
-            .Where(u => u.Id == id)
-            .Select(u => new { u.UnitNumber, PropertyName = u.Property.Name })
-            .SingleOrDefaultAsync(cancellationToken);
-
+        var unit = await _units.DeleteInfoAsync(id, cancellationToken);
         if (unit is null)
             return null;
 

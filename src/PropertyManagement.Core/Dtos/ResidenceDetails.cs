@@ -2,7 +2,7 @@ using PropertyManagement.Core.ValueObjects;
 
 namespace PropertyManagement.Core.Dtos;
 
-public sealed record ResidenceDetails
+public sealed class ResidenceDetails
 {
     public required Address Address { get; init; }
     public required string LandlordName { get; init; }

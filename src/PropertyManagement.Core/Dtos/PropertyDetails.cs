@@ -1,6 +1,6 @@
 namespace PropertyManagement.Core.Dtos;
 
-public sealed record PropertyDetails
+public sealed class PropertyDetails
 {
     public required string Name { get; init; }
     public required string Street { get; init; }

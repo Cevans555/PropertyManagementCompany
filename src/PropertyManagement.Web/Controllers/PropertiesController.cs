@@ -1,12 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using PropertyManagement.Data;
 using PropertyManagement.Data.Services;
 using PropertyManagement.Web.Authorization;
 using PropertyManagement.Web.Infrastructure;
 using PropertyManagement.Web.Models;
 using PropertyManagement.Web.Models.Properties;
+using PropertyManagement.Web.Queries;
 
 namespace PropertyManagement.Web.Controllers;
 
@@ -16,12 +15,12 @@ public class PropertiesController : Controller
     private const string PropertyFormPartial = "_PropertyForm";
     private const string DeleteConfirmPartial = "_DeleteConfirm";
 
-    private readonly PropertyManagementDbContext _db;
+    private readonly PropertyQueries _properties;
     private readonly PropertyService _propertyService;
 
-    public PropertiesController(PropertyManagementDbContext db, PropertyService propertyService)
+    public PropertiesController(PropertyQueries properties, PropertyService propertyService)
     {
-        _db = db;
+        _properties = properties;
         _propertyService = propertyService;
     }
 
@@ -40,19 +39,7 @@ public class PropertiesController : Controller
     [HttpGet]
     public async Task<IActionResult> Details(int id, CancellationToken cancellationToken)
     {
-        var property = await _db.Properties
-            .AsNoTracking()
-            .Where(p => p.Id == id)
-            .Select(p => new PropertyHeaderViewModel
-            {
-                Id = p.Id,
-                Name = p.Name,
-                Street = p.Address.Street,
-                City = p.Address.City,
-                State = p.Address.State,
-                PostalCode = p.Address.PostalCode
-            })
-            .SingleOrDefaultAsync(cancellationToken);
+        var property = await _properties.HeaderAsync(id, cancellationToken);
 
         if (property is null)
             return NotFound();
@@ -79,19 +66,7 @@ public class PropertiesController : Controller
     [HttpGet]
     public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
     {
-        var model = await _db.Properties
-            .AsNoTracking()
-            .Where(p => p.Id == id)
-            .Select(p => new PropertyFormViewModel
-            {
-                Id = p.Id,
-                Name = p.Name,
-                Street = p.Address.Street,
-                City = p.Address.City,
-                State = p.Address.State,
-                PostalCode = p.Address.PostalCode
-            })
-            .SingleOrDefaultAsync(cancellationToken);
+        var model = await _properties.FormAsync(id, cancellationToken);
 
         if (model is null)
             return NotFound();
@@ -146,11 +121,7 @@ public class PropertiesController : Controller
 
     private async Task<DeleteConfirmViewModel?> PropertyDeleteModelAsync(int id, CancellationToken cancellationToken)
     {
-        var property = await _db.Properties
-            .AsNoTracking()
-            .Where(p => p.Id == id)
-            .Select(p => new { p.Name, UnitCount = p.Units.Count() })
-            .SingleOrDefaultAsync(cancellationToken);
+        var property = await _properties.DeleteInfoAsync(id, cancellationToken);
 
         if (property is null)
             return null;

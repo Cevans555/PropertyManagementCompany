@@ -6,7 +6,7 @@ using PropertyManagement.Data;
 using PropertyManagement.Web.Models.Applications;
 using PropertyManagement.Web.Models.Grid;
 
-namespace PropertyManagement.Web.Services;
+namespace PropertyManagement.Web.Queries.Applications;
 
 public sealed class ApplicationListQuery
 {
