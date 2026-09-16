@@ -1,6 +1,7 @@
 using System.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using PropertyManagement.Core.Common;
 using PropertyManagement.Core.Entities;
 
@@ -16,11 +17,13 @@ public sealed class ApplicationUpdater
 
     private readonly PropertyManagementDbContext _db;
     private readonly TimeProvider _timeProvider;
+    private readonly ILogger<ApplicationUpdater> _logger;
 
-    public ApplicationUpdater(PropertyManagementDbContext db, TimeProvider timeProvider)
+    public ApplicationUpdater(PropertyManagementDbContext db, TimeProvider timeProvider, ILogger<ApplicationUpdater> logger)
     {
         _db = db;
         _timeProvider = timeProvider;
+        _logger = logger;
     }
 
     public DateTime Now()
@@ -69,14 +72,17 @@ public sealed class ApplicationUpdater
         }
         catch (DomainException ex)
         {
+            _logger.LogWarning("Change to application {ApplicationId} refused: {Reason}", applicationId, ex.Message);
             return Fail(ex.Message);
         }
         catch (Exception ex) when (ex is DbUpdateConcurrencyException or StaleDataException)
         {
+            _logger.LogWarning("Change to application {ApplicationId} refused because the page was out of date", applicationId);
             return Fail(StaleDataMessage);
         }
         catch (Exception ex) when (IsDeadlock(ex))
         {
+            _logger.LogWarning("Change to application {ApplicationId} lost a deadlock to a concurrent lease change", applicationId);
             return Fail(ConcurrentLeaseMessage);
         }
     }
