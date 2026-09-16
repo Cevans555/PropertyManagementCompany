@@ -15,7 +15,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\PropertyManagement.Core\PropertyManagement.Core.csproj" />
+    <ProjectReference Include="..\..\src\PropertyManagement.Web\PropertyManagement.Web.csproj" />
   </ItemGroup>
 
   <ItemGroup>

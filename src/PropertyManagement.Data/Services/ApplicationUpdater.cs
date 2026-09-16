@@ -87,6 +87,7 @@ public sealed class ApplicationUpdater
         return ServiceResult.Failure(error);
     }
 
+    // EF wraps a cancelled transaction, so the SQL deadlock error can sit several levels down.
     private static bool IsDeadlock(Exception? ex)
     {
         while (ex is not null)

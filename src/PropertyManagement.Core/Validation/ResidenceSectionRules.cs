@@ -1,6 +1,5 @@
-namespace PropertyManagement.Core.Validation;
+﻿namespace PropertyManagement.Core.Validation;
 
-/// <summary>The Residence History section rules. Each residence is validated when it's added through its modal.</summary>
 public static class ResidenceSectionRules
 {
     public const string ResidencesField = "Residences";

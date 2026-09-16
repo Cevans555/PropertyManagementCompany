@@ -1,11 +1,15 @@
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PropertyManagement.Core.Common;
+using PropertyManagement.Core.Security;
 using PropertyManagement.Data;
 using PropertyManagement.Data.Auditing;
 using PropertyManagement.Data.Queries;
 using PropertyManagement.Data.Seeding;
 using PropertyManagement.Data.Services;
+using PropertyManagement.Web.Authorization;
 using PropertyManagement.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -30,10 +34,34 @@ builder.Services.AddDbContext<PropertyManagementDbContext>((services, options) =
 });
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-builder.Services.AddDefaultIdentity<AppUser>(options => options.SignIn.RequireConfirmedAccount = true)
-    .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<PropertyManagementDbContext>();
-builder.Services.AddControllersWithViews();
+builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
+    {
+        options.SignIn.RequireConfirmedAccount = false;
+        options.User.RequireUniqueEmail = true;
+        options.Password.RequiredLength = 8;
+        // Required: AddDefaultIdentity applied this when the schema was scaffolded. Removing it widens
+        // Identity's composite key columns to nvarchar(450) and the app won't start.
+        options.Stores.MaxLengthForKeys = 128;
+    })
+    .AddEntityFrameworkStores<PropertyManagementDbContext>()
+    .AddDefaultTokenProviders();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Account/Login";
+    options.LogoutPath = "/Account/Logout";
+    options.AccessDeniedPath = "/Account/AccessDenied";
+});
+
+builder.Services.AddAuthorizationBuilder()
+    .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build())
+    .AddPolicy(Policies.PropertyManager, policy => policy.RequireRole(Roles.PropertyManager))
+    .AddPolicy(Policies.Applicant, policy => policy.RequireRole(Roles.Applicant));
+
+builder.Services.AddSingleton<IAuthorizationHandler, RentalApplicationAuthorizationHandler>();
+
+builder.Services.AddControllersWithViews(options =>
+    options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute()));
 
 var app = builder.Build();
 
@@ -52,16 +80,18 @@ else
 app.UseHttpsRedirection();
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapStaticAssets();
+app.MapStaticAssets().AllowAnonymous();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
-app.MapRazorPages()
-   .WithStaticAssets();
-
 app.Run();
+
+public partial class Program
+{
+}

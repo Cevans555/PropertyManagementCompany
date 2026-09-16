@@ -1,5 +1,6 @@
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
 using PropertyManagement.Core.Common;
 using PropertyManagement.Core.Entities;
 using PropertyManagement.Core.ValueObjects;
@@ -10,11 +11,11 @@ using PropertyManagement.Data.Services;
 
 namespace PropertyManagement.IntegrationTests.Infrastructure;
 
-
 public sealed class TestDatabase : IAsyncLifetime
 {
     private readonly string _databaseName = $"PropertyManagementTests_{Guid.NewGuid():N}";
     private readonly TestCurrentUser _currentUser = new();
+    private readonly IServiceProvider _appServices = BuildAppServices();
 
     public TimeProvider Clock { get; } = new BusinessTimeProvider(TimeZoneInfo.FindSystemTimeZoneById("America/New_York"));
 
@@ -28,7 +29,7 @@ public sealed class TestDatabase : IAsyncLifetime
         var options = new DbContextOptionsBuilder<PropertyManagementDbContext>()
             .UseSqlServer(ConnectionString, sql => sql.MigrationsAssembly("PropertyManagement.Data"))
             .AddInterceptors(new AuditSaveChangesInterceptor(_currentUser, Clock))
-            .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning))
+            .UseApplicationServiceProvider(_appServices)
             .Options;
 
         return new PropertyManagementDbContext(options);
@@ -86,5 +87,14 @@ public sealed class TestDatabase : IAsyncLifetime
     {
         await using var db = CreateContext();
         await db.Database.EnsureDeletedAsync();
+    }
+
+    /// <summary>Identity reads MaxLengthForKeys from here while building the model; without it the test
+    /// model's key columns are nvarchar(450) and don't match the migration's nvarchar(128).</summary>
+    private static IServiceProvider BuildAppServices()
+    {
+        var services = new ServiceCollection();
+        services.Configure<IdentityOptions>(options => options.Stores.MaxLengthForKeys = 128);
+        return services.BuildServiceProvider();
     }
 }

@@ -1,4 +1,4 @@
-using PropertyManagement.Core.Common;
+﻿using PropertyManagement.Core.Common;
 
 namespace PropertyManagement.Core.Entities;
 
@@ -28,7 +28,6 @@ public class Lease : CreationAuditedEntity
         return startDate.AddMonths(TermMonths).AddDays(-1);
     }
 
-    /// <summary>A lease may start today or later (in the business time zone), up to MaxStartDaysAhead days ahead.</summary>
     public static void EnsureValidStartDate(DateOnly startDate, DateOnly today)
     {
         if (startDate < today)
