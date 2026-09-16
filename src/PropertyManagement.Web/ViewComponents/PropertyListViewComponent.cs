@@ -24,15 +24,17 @@ public class PropertyListViewComponent : ViewComponent
         var properties = await _db.Properties
             .AsNoTracking()
             .OrderBy(p => p.Name)
-            .Select(p => new PropertyListItemViewModel(
-                p.Id,
-                p.Name,
-                p.Address.Street,
-                p.Address.City,
-                p.Address.State,
-                p.Address.PostalCode,
-                p.Units.Count(),
-                p.Units.Count(u => !u.Leases.Any(l => l.StartDate <= today && l.EndDate >= today))))
+            .Select(p => new PropertyListItemViewModel
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Street = p.Address.Street,
+                City = p.Address.City,
+                State = p.Address.State,
+                PostalCode = p.Address.PostalCode,
+                UnitCount = p.Units.Count(),
+                AvailableUnitCount = p.Units.Count(u => !u.Leases.Any(l => l.StartDate <= today && l.EndDate >= today))
+            })
             .ToListAsync(HttpContext.RequestAborted);
 
         return View(properties);

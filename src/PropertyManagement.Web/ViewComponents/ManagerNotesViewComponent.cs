@@ -20,15 +20,21 @@ public class ManagerNotesViewComponent : ViewComponent
             .AsNoTracking()
             .Where(n => n.RentalApplicationId == applicationId)
             .OrderByDescending(n => n.CreatedAt)
-            .Select(n => new ManagerNoteRowViewModel(
-                n.Id,
-                n.Text,
-                _db.Users.Where(u => u.Id == n.CreatedById).Select(u => u.FirstName + " " + u.LastName).FirstOrDefault() ?? n.CreatedById,
-                n.CreatedAt,
-                n.ModifiedAt,
-                _db.Users.Where(u => u.Id == n.ModifiedById).Select(u => u.FirstName + " " + u.LastName).FirstOrDefault()))
+            .Select(n => new ManagerNoteRowViewModel
+            {
+                Id = n.Id,
+                Text = n.Text,
+                Author = _db.Users.Where(u => u.Id == n.CreatedById).Select(u => u.FirstName + " " + u.LastName).FirstOrDefault() ?? n.CreatedById,
+                CreatedAt = n.CreatedAt,
+                ModifiedAt = n.ModifiedAt,
+                ModifiedBy = _db.Users.Where(u => u.Id == n.ModifiedById).Select(u => u.FirstName + " " + u.LastName).FirstOrDefault()
+            })
             .ToListAsync(HttpContext.RequestAborted);
 
-        return View(new ManagerNotesViewModel(applicationId, notes));
+        return View(new ManagerNotesViewModel
+        {
+            ApplicationId = applicationId,
+            Notes = notes
+        });
     }
 }

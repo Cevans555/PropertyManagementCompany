@@ -1,7 +1,11 @@
 namespace PropertyManagement.Web.Models.Grid;
 
-public sealed record GridColumn(string Key, string Title)
+public sealed record GridColumn
 {
+    public required string Key { get; init; }
+
+    public required string Title { get; init; }
+
     public string? SortKey { get; init; }
 
     public GridCellFormat Format { get; init; } = GridCellFormat.Text;

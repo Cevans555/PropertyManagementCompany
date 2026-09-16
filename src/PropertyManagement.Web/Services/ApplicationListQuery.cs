@@ -66,18 +66,26 @@ public sealed class ApplicationListQuery
             .ToDictionaryAsync(u => u.Id, u => u.Name, cancellationToken);
 
         var items = rows
-            .Select(r => new ApplicationListRowViewModel(
-                r.Id,
-                r.PropertyName,
-                r.UnitNumber,
-                r.Status,
-                string.Join(", ", r.ApplicantUserIds.Select(id => names.GetValueOrDefault(id, "Unknown user"))),
-                r.CreatedAt,
-                r.SubmittedAt,
-                r.ClaimedBy))
+            .Select(r => new ApplicationListRowViewModel
+            {
+                Id = r.Id,
+                PropertyName = r.PropertyName,
+                UnitNumber = r.UnitNumber,
+                Status = r.Status,
+                Applicants = string.Join(", ", r.ApplicantUserIds.Select(id => names.GetValueOrDefault(id, "Unknown user"))),
+                CreatedAt = r.CreatedAt,
+                SubmittedAt = r.SubmittedAt,
+                ClaimedBy = r.ClaimedBy
+            })
             .ToList();
 
-        return new PagedResult<ApplicationListRowViewModel>(items, totalCount, page, paging.PageSize);
+        return new PagedResult<ApplicationListRowViewModel>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = paging.PageSize
+        };
     }
 
     private IOrderedQueryable<RentalApplication> Sort(

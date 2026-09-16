@@ -1,8 +1,10 @@
 namespace PropertyManagement.Web.Models;
 
-public sealed record DeleteConfirmViewModel(
-    string Title,
-    string Message,
-    string PostUrl,
-    string ConfirmText = "Remove",
-    IReadOnlyDictionary<string, string>? HiddenFields = null);
+public sealed record DeleteConfirmViewModel
+{
+    public required string Title { get; init; }
+    public required string Message { get; init; }
+    public required string PostUrl { get; init; }
+    public string ConfirmText { get; init; } = "Remove";
+    public IReadOnlyDictionary<string, string>? HiddenFields { get; init; }
+}

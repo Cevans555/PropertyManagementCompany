@@ -1,6 +1,6 @@
 namespace PropertyManagement.Core.Dtos;
 
-public sealed class UnitDetails
+public sealed record UnitDetails
 {
     public required string UnitNumber { get; init; }
     public required int Bedrooms { get; init; }

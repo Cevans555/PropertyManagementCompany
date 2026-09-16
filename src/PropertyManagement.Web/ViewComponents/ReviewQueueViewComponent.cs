@@ -28,23 +28,27 @@ public class ReviewQueueViewComponent : ViewComponent
             {
                 a.Status,
                 a.ClaimedById,
-                Row = new QueueRowViewModel(
-                    a.Id,
-                    a.Unit.Property.Name,
-                    a.Unit.UnitNumber,
-                    _db.Users
+                Row = new QueueRowViewModel
+                {
+                    ApplicationId = a.Id,
+                    PropertyName = a.Unit.Property.Name,
+                    UnitNumber = a.Unit.UnitNumber,
+                    ApplicantName = _db.Users
                         .Where(u => u.Id == a.Applicants.Where(p => p.IsPrimary).Select(p => p.UserId).FirstOrDefault())
                         .Select(u => u.FirstName + " " + u.LastName)
                         .FirstOrDefault() ?? string.Empty,
-                    a.SubmittedAt,
-                    _db.Users.Where(u => u.Id == a.ClaimedById).Select(u => u.FirstName + " " + u.LastName).FirstOrDefault(),
-                    a.ClaimedAt)
+                    SubmittedAt = a.SubmittedAt,
+                    ClaimedBy = _db.Users.Where(u => u.Id == a.ClaimedById).Select(u => u.FirstName + " " + u.LastName).FirstOrDefault(),
+                    ClaimedAt = a.ClaimedAt
+                }
             })
             .ToListAsync(HttpContext.RequestAborted);
 
-        return View(new ReviewQueueViewModel(
-            rows.Where(r => r.Status == ApplicationStatus.Submitted).Select(r => r.Row).ToList(),
-            rows.Where(r => r.Status == ApplicationStatus.UnderReview && r.ClaimedById == managerId).Select(r => r.Row).ToList(),
-            rows.Where(r => r.Status == ApplicationStatus.UnderReview && r.ClaimedById != managerId).Select(r => r.Row).ToList()));
+        return View(new ReviewQueueViewModel
+        {
+            Waiting = rows.Where(r => r.Status == ApplicationStatus.Submitted).Select(r => r.Row).ToList(),
+            MyClaims = rows.Where(r => r.Status == ApplicationStatus.UnderReview && r.ClaimedById == managerId).Select(r => r.Row).ToList(),
+            OtherClaims = rows.Where(r => r.Status == ApplicationStatus.UnderReview && r.ClaimedById != managerId).Select(r => r.Row).ToList()
+        });
     }
 }

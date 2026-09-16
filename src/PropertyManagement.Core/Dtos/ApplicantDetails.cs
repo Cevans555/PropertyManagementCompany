@@ -1,6 +1,6 @@
 ﻿namespace PropertyManagement.Core.Dtos;
 
-public sealed class ApplicantDetails
+public sealed record ApplicantDetails
 {
     public string? FirstName { get; init; }
     public string? LastName { get; init; }

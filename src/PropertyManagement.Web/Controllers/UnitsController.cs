@@ -186,9 +186,11 @@ public class UnitsController : Controller
         if (unit is null)
             return null;
 
-        return new DeleteConfirmViewModel(
-            "Remove unit",
-            $"Remove unit {unit.UnitNumber} from {unit.PropertyName}? This can't be undone.",
-            Url.Action(nameof(Delete), new { id })!);
+        return new DeleteConfirmViewModel
+        {
+            Title = "Remove unit",
+            Message = $"Remove unit {unit.UnitNumber} from {unit.PropertyName}? This can't be undone.",
+            PostUrl = Url.Action(nameof(Delete), new { id })!
+        };
     }
 }

@@ -25,15 +25,23 @@ public class ResidenceListViewComponent : ViewComponent
             .AsNoTracking()
             .Where(r => r.RentalApplicationId == applicationId)
             .OrderByDescending(r => r.MoveOutDate)
-            .Select(r => new ResidenceRowViewModel(
-                r.Id,
-                r.Address.Street + ", " + r.Address.City + ", " + r.Address.State + " " + r.Address.PostalCode,
-                r.LandlordName,
-                r.LandlordPhone,
-                r.MoveInDate,
-                r.MoveOutDate))
+            .Select(r => new ResidenceRowViewModel
+            {
+                Id = r.Id,
+                Address = r.Address.Street + ", " + r.Address.City + ", " + r.Address.State + " " + r.Address.PostalCode,
+                LandlordName = r.LandlordName,
+                LandlordPhone = r.LandlordPhone,
+                MoveInDate = r.MoveInDate,
+                MoveOutDate = r.MoveOutDate
+            })
             .ToListAsync(HttpContext.RequestAborted);
 
-        return View(new ResidenceListViewModel(applicationId, editable, sectionVersion, residences));
+        return View(new ResidenceListViewModel
+        {
+            ApplicationId = applicationId,
+            Editable = editable,
+            SectionVersion = sectionVersion,
+            Residences = residences
+        });
     }
 }

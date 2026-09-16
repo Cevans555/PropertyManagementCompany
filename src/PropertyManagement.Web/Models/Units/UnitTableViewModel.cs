@@ -1,3 +1,7 @@
 namespace PropertyManagement.Web.Models.Units;
 
-public sealed record UnitTableViewModel(int PropertyId, IReadOnlyList<UnitRowViewModel> Units);
+public sealed record UnitTableViewModel
+{
+    public required int PropertyId { get; init; }
+    public required IReadOnlyList<UnitRowViewModel> Units { get; init; }
+}

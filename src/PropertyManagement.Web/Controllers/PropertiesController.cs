@@ -43,7 +43,15 @@ public class PropertiesController : Controller
         var property = await _db.Properties
             .AsNoTracking()
             .Where(p => p.Id == id)
-            .Select(p => new PropertyHeaderViewModel(p.Id, p.Name, p.Address.Street, p.Address.City, p.Address.State, p.Address.PostalCode))
+            .Select(p => new PropertyHeaderViewModel
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Street = p.Address.Street,
+                City = p.Address.City,
+                State = p.Address.State,
+                PostalCode = p.Address.PostalCode
+            })
             .SingleOrDefaultAsync(cancellationToken);
 
         if (property is null)
@@ -147,9 +155,11 @@ public class PropertiesController : Controller
         if (property is null)
             return null;
 
-        return new DeleteConfirmViewModel(
-            "Remove property",
-            $"Remove {property.Name} and its {property.UnitCount} unit(s)? This can't be undone.",
-            Url.Action(nameof(Delete), new { id })!);
+        return new DeleteConfirmViewModel
+        {
+            Title = "Remove property",
+            Message = $"Remove {property.Name} and its {property.UnitCount} unit(s)? This can't be undone.",
+            PostUrl = Url.Action(nameof(Delete), new { id })!
+        };
     }
 }

@@ -44,19 +44,27 @@ public class ApplicationsApiController : ControllerBase
             cancellationToken);
 
         var items = result.Items
-            .Select(row => new ApplicationListItem(
-                row.Id,
-                row.PropertyName,
-                row.UnitNumber,
-                row.Status,
-                row.Status.DisplayName(),
-                row.Applicants,
-                row.CreatedAt,
-                row.SubmittedAt,
-                row.ClaimedBy,
-                Url.Action("Details", "Applications", new { id = row.Id })!))
+            .Select(row => new ApplicationListItem
+            {
+                Id = row.Id,
+                PropertyName = row.PropertyName,
+                UnitNumber = row.UnitNumber,
+                Status = row.Status,
+                StatusName = row.Status.DisplayName(),
+                Applicants = row.Applicants,
+                CreatedAt = row.CreatedAt,
+                SubmittedAt = row.SubmittedAt,
+                ClaimedBy = row.ClaimedBy,
+                DetailsUrl = Url.Action("Details", "Applications", new { id = row.Id })!
+            })
             .ToList();
 
-        return new PagedResult<ApplicationListItem>(items, result.TotalCount, result.Page, result.PageSize);
+        return new PagedResult<ApplicationListItem>
+        {
+            Items = items,
+            TotalCount = result.TotalCount,
+            Page = result.Page,
+            PageSize = result.PageSize
+        };
     }
 }

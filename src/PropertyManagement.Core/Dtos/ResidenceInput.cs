@@ -1,6 +1,6 @@
 namespace PropertyManagement.Core.Dtos;
 
-public sealed class ResidenceInput
+public sealed record ResidenceInput
 {
     public required string Street { get; init; }
     public required string City { get; init; }

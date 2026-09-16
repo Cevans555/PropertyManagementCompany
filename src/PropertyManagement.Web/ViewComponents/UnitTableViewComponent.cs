@@ -25,20 +25,26 @@ public class UnitTableViewComponent : ViewComponent
             .AsNoTracking()
             .Where(u => u.PropertyId == propertyId)
             .OrderBy(u => u.UnitNumber)
-            .Select(u => new UnitRowViewModel(
-                u.Id,
-                u.UnitNumber,
-                u.UnitType.Name,
-                u.UnitType.IsActive,
-                u.Bedrooms,
-                u.MonthlyRent,
-                u.Leases
+            .Select(u => new UnitRowViewModel
+            {
+                Id = u.Id,
+                UnitNumber = u.UnitNumber,
+                UnitTypeName = u.UnitType.Name,
+                UnitTypeIsActive = u.UnitType.IsActive,
+                Bedrooms = u.Bedrooms,
+                MonthlyRent = u.MonthlyRent,
+                LeasedUntil = u.Leases
                     .Where(l => l.StartDate <= today && l.EndDate >= today)
                     .Select(l => (DateOnly?)l.EndDate)
                     .FirstOrDefault(),
-                _db.RentalApplications.Count(a => a.UnitId == u.Id)))
+                ApplicationCount = _db.RentalApplications.Count(a => a.UnitId == u.Id)
+            })
             .ToListAsync(HttpContext.RequestAborted);
 
-        return View(new UnitTableViewModel(propertyId, units));
+        return View(new UnitTableViewModel
+        {
+            PropertyId = propertyId,
+            Units = units
+        });
     }
 }

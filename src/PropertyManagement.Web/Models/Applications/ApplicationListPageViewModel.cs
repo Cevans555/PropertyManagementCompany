@@ -5,35 +5,50 @@ using PropertyManagement.Web.Models.Grid;
 
 namespace PropertyManagement.Web.Models.Applications;
 
-public sealed record ApplicationListPageViewModel(
-    ApplicationStatus? Status,
-    int? PropertyId,
-    bool IsManager,
-    IReadOnlyList<SelectListItem> StatusOptions,
-    IReadOnlyList<SelectListItem> PropertyOptions)
+public sealed record ApplicationListPageViewModel
 {
     public const string FilterFormId = "application-filters";
+
+    public ApplicationStatus? Status { get; init; }
+
+    public int? PropertyId { get; init; }
+
+    public required bool IsManager { get; init; }
+
+    public required IReadOnlyList<SelectListItem> StatusOptions { get; init; }
+
+    public required IReadOnlyList<SelectListItem> PropertyOptions { get; init; }
 
     public GridViewModel Grid(string dataUrl)
     {
         var columns = new List<GridColumn>
         {
-            new("propertyName", "Unit")
+            new()
             {
+                Key = "propertyName",
+                Title = "Unit",
                 SortKey = "property",
                 SecondaryKey = "unitNumber",
                 SecondaryPrefix = "Unit "
             },
-            new("applicants", "Applicants"),
-            new("status", "Status")
+            new()
             {
+                Key = "applicants",
+                Title = "Applicants"
+            },
+            new()
+            {
+                Key = "status",
+                Title = "Status",
                 SortKey = "status",
                 Format = GridCellFormat.Badge,
                 SecondaryKey = "statusName",
                 BadgeClasses = StatusBadges.ByName
             },
-            new("submittedAt", "Submitted")
+            new()
             {
+                Key = "submittedAt",
+                Title = "Submitted",
                 SortKey = "submitted",
                 Format = GridCellFormat.Date,
                 EmptyText = "Not submitted"
@@ -42,22 +57,30 @@ public sealed record ApplicationListPageViewModel(
 
         if (IsManager)
         {
-            columns.Add(new GridColumn("claimedBy", "Claimed by")
+            columns.Add(new GridColumn
             {
+                Key = "claimedBy",
+                Title = "Claimed by",
                 SortKey = "claimedBy",
                 EmptyText = "-"
             });
         }
 
-        columns.Add(new GridColumn("detailsUrl", "Actions")
+        columns.Add(new GridColumn
         {
+            Key = "detailsUrl",
+            Title = "Actions",
             Format = GridCellFormat.Link,
             LinkText = "Open",
             HideTitle = true
         });
 
-        return new GridViewModel("application-grid", dataUrl, "Applications", columns)
+        return new GridViewModel
         {
+            Id = "application-grid",
+            DataUrl = dataUrl,
+            Caption = "Applications",
+            Columns = columns,
             DefaultSort = "submitted",
             DefaultDirection = SortDirection.Desc,
             EmptyText = "No applications match these filters.",

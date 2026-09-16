@@ -21,13 +21,20 @@ public class ApplicantListViewComponent : ViewComponent
                 where applicant.RentalApplicationId == applicationId
                 join user in _db.Users on applicant.UserId equals user.Id
                 orderby applicant.IsPrimary descending, applicant.Id
-                select new ApplicantListItemViewModel(
-                    user.FirstName + " " + user.LastName,
-                    user.Email ?? string.Empty,
-                    applicant.IsPrimary,
-                    applicant.DetailsSavedAt != null))
+                select new ApplicantListItemViewModel
+                {
+                    Name = user.FirstName + " " + user.LastName,
+                    Email = user.Email ?? string.Empty,
+                    IsPrimary = applicant.IsPrimary,
+                    HasSavedDetails = applicant.DetailsSavedAt != null
+                })
             .ToListAsync(HttpContext.RequestAborted);
 
-        return View(new ApplicantListViewModel(applicationId, editable, people));
+        return View(new ApplicantListViewModel
+        {
+            ApplicationId = applicationId,
+            Editable = editable,
+            People = people
+        });
     }
 }

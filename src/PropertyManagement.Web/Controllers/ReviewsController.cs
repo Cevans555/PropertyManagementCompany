@@ -268,10 +268,12 @@ public class ReviewsController : Controller
 
     private DeleteConfirmViewModel DeleteNoteConfirmation(int noteId)
     {
-        return new DeleteConfirmViewModel(
-            "Remove note",
-            "Remove this note? This can't be undone.",
-            Url.Action(nameof(DeleteNote), new { id = noteId })!);
+        return new DeleteConfirmViewModel
+        {
+            Title = "Remove note",
+            Message = "Remove this note? This can't be undone.",
+            PostUrl = Url.Action(nameof(DeleteNote), new { id = noteId })!
+        };
     }
 
     private IActionResult ToModalResult(ServiceResult result, string partialViewName, object model)

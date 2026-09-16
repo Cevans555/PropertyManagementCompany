@@ -29,23 +29,25 @@ public class AvailableUnitsViewComponent : ViewComponent
             .Where(u => !u.Leases.Any(l => l.StartDate <= today && l.EndDate >= today))
             .OrderBy(u => u.Property.Name)
             .ThenBy(u => u.UnitNumber)
-            .Select(u => new AvailableUnitViewModel(
-                u.Id,
-                u.Property.Name,
-                u.Property.Address.City,
-                u.Property.Address.State,
-                u.UnitNumber,
-                u.UnitType.Name,
-                u.Bedrooms,
-                u.MonthlyRent,
-                _db.RentalApplications
+            .Select(u => new AvailableUnitViewModel
+            {
+                UnitId = u.Id,
+                PropertyName = u.Property.Name,
+                City = u.Property.Address.City,
+                State = u.Property.Address.State,
+                UnitNumber = u.UnitNumber,
+                UnitTypeName = u.UnitType.Name,
+                Bedrooms = u.Bedrooms,
+                MonthlyRent = u.MonthlyRent,
+                OpenApplicationId = _db.RentalApplications
                     .Where(a => a.UnitId == u.Id
                         && a.Applicants.Any(p => p.UserId == userId)
                         && a.Status != ApplicationStatus.Approved
                         && a.Status != ApplicationStatus.Denied
                         && a.Status != ApplicationStatus.Withdrawn)
                     .Select(a => (int?)a.Id)
-                    .FirstOrDefault()))
+                    .FirstOrDefault()
+            })
             .ToListAsync(HttpContext.RequestAborted);
 
         return View(units);

@@ -67,8 +67,14 @@ public class ApplicationsController : Controller
             .Select(p => new SelectListItem(p.Name, p.Id.ToString(CultureInfo.InvariantCulture), p.Id == propertyId))
             .ToList();
 
-        return View(new ApplicationListPageViewModel(
-            status, propertyId, User.IsInRole(Roles.PropertyManager), statusOptions, propertyOptions));
+        return View(new ApplicationListPageViewModel
+        {
+            Status = status,
+            PropertyId = propertyId,
+            IsManager = User.IsInRole(Roles.PropertyManager),
+            StatusOptions = statusOptions,
+            PropertyOptions = propertyOptions
+        });
     }
 
     [HttpGet]
@@ -421,23 +427,27 @@ public class ApplicationsController : Controller
             ? "Remove this residence?"
             : $"Remove {residence.Address} from your residence history?";
 
-        return new DeleteConfirmViewModel(
-            "Remove residence",
-            message,
-            Url.Action(nameof(DeleteResidence), new { id = residenceId })!,
-            HiddenFields: new Dictionary<string, string>
+        return new DeleteConfirmViewModel
+        {
+            Title = "Remove residence",
+            Message = message,
+            PostUrl = Url.Action(nameof(DeleteResidence), new { id = residenceId })!,
+            HiddenFields = new Dictionary<string, string>
             {
                 [nameof(ApplicationPageViewModel.ResidenceSectionVersion)] = sectionVersion.ToString()
-            });
+            }
+        };
     }
 
     private DeleteConfirmViewModel WithdrawConfirmation(int id)
     {
-        return new DeleteConfirmViewModel(
-            "Withdraw application",
-            "Withdraw this application? You won't be able to change or resubmit it.",
-            Url.Action(nameof(Withdraw), new { id })!,
-            ConfirmText: "Withdraw application");
+        return new DeleteConfirmViewModel
+        {
+            Title = "Withdraw application",
+            Message = "Withdraw this application? You won't be able to change or resubmit it.",
+            PostUrl = Url.Action(nameof(Withdraw), new { id })!,
+            ConfirmText = "Withdraw application"
+        };
     }
 
     private static byte[] DecodeRowVersion(string? value)

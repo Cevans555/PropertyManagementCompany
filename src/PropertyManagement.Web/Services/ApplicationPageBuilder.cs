@@ -67,18 +67,20 @@ public sealed class ApplicationPageBuilder
             .Select(a =>
             {
                 var account = accounts.GetValueOrDefault(a.UserId);
-                return new ApplicantPersonViewModel(
-                    a.UserId,
-                    account is null ? "Unknown user" : $"{account.FirstName} {account.LastName}".Trim(),
-                    account?.Email ?? string.Empty,
-                    a.IsPrimary,
-                    a.UserId == userId,
-                    a.HasSavedDetails,
-                    a.FirstName,
-                    a.LastName,
-                    a.Phone,
-                    a.Email,
-                    AddressText(a));
+                return new ApplicantPersonViewModel
+                {
+                    UserId = a.UserId,
+                    AccountName = account is null ? "Unknown user" : $"{account.FirstName} {account.LastName}".Trim(),
+                    AccountEmail = account?.Email ?? string.Empty,
+                    IsPrimary = a.IsPrimary,
+                    IsCurrentUser = a.UserId == userId,
+                    HasSavedDetails = a.HasSavedDetails,
+                    FirstName = a.FirstName,
+                    LastName = a.LastName,
+                    Phone = a.Phone,
+                    Email = a.Email,
+                    CurrentAddress = AddressText(a)
+                };
             })
             .ToList();
 
@@ -112,16 +114,18 @@ public sealed class ApplicationPageBuilder
             ApplicantRowVersion = posted?.ApplicantRowVersion
                 ?? (currentApplicant is null ? null : Convert.ToBase64String(currentApplicant.RowVersion)),
             ResidenceSectionVersion = application.ResidenceSectionVersion,
-            Header = new ApplicationHeaderViewModel(
-                application.Id,
-                application.Status,
-                application.Unit.Property.Name,
-                application.Unit.UnitNumber,
-                application.Unit.UnitType.Name,
-                application.Unit.Bedrooms,
-                application.Unit.MonthlyRent,
-                application.CreatedAt,
-                application.SubmittedAt),
+            Header = new ApplicationHeaderViewModel
+            {
+                Id = application.Id,
+                Status = application.Status,
+                PropertyName = application.Unit.Property.Name,
+                UnitNumber = application.Unit.UnitNumber,
+                UnitTypeName = application.Unit.UnitType.Name,
+                Bedrooms = application.Unit.Bedrooms,
+                MonthlyRent = application.Unit.MonthlyRent,
+                CreatedAt = application.CreatedAt,
+                SubmittedAt = application.SubmittedAt
+            },
             CanEdit = await IsAllowedAsync(user, application, ApplicationOperations.Edit),
             CanWithdraw = await IsAllowedAsync(user, application, ApplicationOperations.Withdraw),
             CanSeeStatusHistory = canReview,
@@ -145,12 +149,14 @@ public sealed class ApplicationPageBuilder
                 join changedBy in _db.Users on history.ChangedById equals changedBy.Id into changedByUsers
                 from changedBy in changedByUsers.DefaultIfEmpty()
                 orderby history.ChangedAt, history.Id
-                select new StatusHistoryRowViewModel(
-                    history.FromStatus,
-                    history.ToStatus,
-                    changedBy == null ? history.ChangedById : changedBy.FirstName + " " + changedBy.LastName,
-                    history.ChangedAt,
-                    history.Comment))
+                select new StatusHistoryRowViewModel
+                {
+                    FromStatus = history.FromStatus,
+                    ToStatus = history.ToStatus,
+                    ChangedBy = changedBy == null ? history.ChangedById : changedBy.FirstName + " " + changedBy.LastName,
+                    ChangedAt = history.ChangedAt,
+                    Comment = history.Comment
+                })
             .ToListAsync(cancellationToken);
     }
 
@@ -167,34 +173,44 @@ public sealed class ApplicationPageBuilder
             if (!applicant.HasSavedDetails)
             {
                 blockers.Add(person.IsCurrentUser
-                    ? new SubmitBlocker("Save your applicant information.", ApplicationSection.Applicant)
-                    : new SubmitBlocker($"{person.AccountName} still needs to save their applicant information.", null));
+                    ? new SubmitBlocker { Message = "Save your applicant information.", FixSection = ApplicationSection.Applicant }
+                    : new SubmitBlocker { Message = $"{person.AccountName} still needs to save their applicant information." });
                 continue;
             }
 
             foreach (var error in applicant.GetDetailsErrors())
             {
                 blockers.Add(person.IsCurrentUser
-                    ? new SubmitBlocker($"Applicant information: {error.Message}", ApplicationSection.Applicant)
-                    : new SubmitBlocker($"{person.AccountName}'s applicant information: {error.Message}", null));
+                    ? new SubmitBlocker { Message = $"Applicant information: {error.Message}", FixSection = ApplicationSection.Applicant }
+                    : new SubmitBlocker { Message = $"{person.AccountName}'s applicant information: {error.Message}" });
             }
         }
 
         if (application.ResidenceSectionSavedAt is null)
         {
-            blockers.Add(new SubmitBlocker("Save your residence history with at least one prior residence.", ApplicationSection.Residences));
+            blockers.Add(new SubmitBlocker
+            {
+                Message = "Save your residence history with at least one prior residence.",
+                FixSection = ApplicationSection.Residences
+            });
         }
         else
         {
             foreach (var error in application.GetResidenceSectionErrors())
-                blockers.Add(new SubmitBlocker($"Residence history: {error.Message}", ApplicationSection.Residences));
+            {
+                blockers.Add(new SubmitBlocker
+                {
+                    Message = $"Residence history: {error.Message}",
+                    FixSection = ApplicationSection.Residences
+                });
+            }
         }
 
         var today = _timeProvider.Today();
         var leased = await _db.Leases.AnyAsync(
             l => l.UnitId == application.UnitId && l.StartDate <= today && l.EndDate >= today, cancellationToken);
         if (leased)
-            blockers.Add(new SubmitBlocker("This unit has been leased, so the application can't be submitted.", null));
+            blockers.Add(new SubmitBlocker { Message = "This unit has been leased, so the application can't be submitted." });
 
         return blockers;
     }
