@@ -18,6 +18,15 @@ Open `PropertyManagement.slnx` in Visual Studio and press F5, or run:
 dotnet run --project src/PropertyManagement.Web
 ```
 
+### Feature switches
+`Features` in `src/PropertyManagement.Web/appsettings.json`:
+
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `SaveInvalidSections` | `false` | **Bonus 4.** Set to `true` to let an applicant save a section that fails validation, continue through the application, see those errors listed on the summary, and come back to fix them. Submit stays blocked until every error is fixed. |
+
+The value is read per request, so changing it takes effect without restarting the app. It's off by default so the app behaves exactly as the base specification describes; turn it on to see the bonus.
+
 ## Solution structure
 ```
 PropertyManagement.slnx
@@ -50,6 +59,8 @@ References point toward Core: Web → Core, Data; Data → Core; Tests → Core.
 **The application list.** Role scoping and both filters are applied to the `IQueryable` before it runs, so SQL Server does the filtering rather than the app loading every application and narrowing it in memory. Applicant names are resolved in a second lookup instead of a join per row. The filter form is a `GET`, so a filtered list can be bookmarked and the back button behaves. `ApplicationListQuery` sits in `Web/Services` rather than `Data/Queries` because it takes a `ClaimsPrincipal` and projects straight into view models — a presentation query, the same reasoning as `ApplicationPageBuilder`.
 
 **Manager notes.** Notes are their own aggregate rather than part of the application, so loading an application never loads them and an applicant page cannot leak one. The notes endpoints and panel are behind the same `ManageNotes` authorization check, and the author and edit times come from the audit columns rather than being stored again.
+
+**Saving sections with errors.** Behind `Features:SaveInvalidSections`, Continue saves a section that fails validation instead of rejecting it. The switch decides what may be *saved*, never what counts as *valid*: the rules run again when the summary lists what's blocking submission and again when Submit is attempted, so an application saved with errors can't be submitted, even after the switch is turned back off. The one thing the switch can't relax is a value too long for its column — those rules carry `BlocksSaving`, and the entity rejects them whatever the caller asks for. The rules live in `Core/Validation` and are used by the form, the entity, the summary and Submit, so there's one definition of what a complete section looks like.
 
 **Stale saves.** Two applicants can edit one application at once, so each save carries the version it was loaded with: the applicant's row version for their own section, and a section version for the shared residence list. A save from a stale page is rejected with a message to reload rather than overwriting someone else's work.
 
