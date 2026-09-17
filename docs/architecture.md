@@ -1,76 +1,136 @@
-# Architecture overview
+# Architecture
 
-## Projects
+The system map. Read this first, then [domain](domain.md), [workflows](workflows.md), [decisions](decisions.md), [testing](testing.md) and [handoff](handoff.md).
 
-| Project | Holds | Depends on |
+## Projects and dependency direction
+
+| Project | Holds | References |
 | --- | --- | --- |
-| `PropertyManagement.Core` | Entities, business rules, validation rules, value objects, DTOs | nothing |
-| `PropertyManagement.Data` | `PropertyManagementDbContext`, EF configurations, migrations, seeding, auditing, services, data queries | Core |
-| `PropertyManagement.Web` | Controllers, views, view components, view models, presentation queries, authorization, startup | Data, Core |
+| `src/PropertyManagement.Core` | Entities, business rules, validation rules, the `Address` value object, DTOs, `BusinessTimeProvider` | nothing |
+| `src/PropertyManagement.Data` | `PropertyManagementDbContext`, `AppUser`, EF configurations, migrations, seeding, the audit interceptor, services, data queries | Core |
+| `src/PropertyManagement.Web` | Controllers, Razor views and partials, view components, view models, presentation queries, authorization, `Program.cs` | Data, Core |
 
 ```mermaid
 flowchart LR
-    Web --> Data
+    Web --> Data --> Core
     Web --> Core
-    Data --> Core
-    Tests[PropertyManagement.Tests] --> Core
-    Tests --> Web
-    Integration[PropertyManagement.IntegrationTests] --> Web
-    Integration --> Data
-    Integration --> Core
-    Browser[PropertyManagement.BrowserTests] --> Integration
 ```
 
-Core has no reference to EF Core or ASP.NET Core, so the rules can be unit tested without a database or a web server.
+- Core has no reference to EF Core or ASP.NET Core, so its rules are unit tested with plain objects.
+- There is no separate application layer. Use cases (start, submit, claim, approve and so on) are services in Data, next to the `DbContext` they coordinate. With a single front end, another project would add indirection without separating anything that changes independently.
 
-There is deliberately no separate application layer. The use cases (start, submit, claim, approve and so on) are services in Data, next to the `DbContext` they coordinate. With one front end, another project would add indirection without separating anything that changes independently.
+## Folder map
 
-## A write
+```
+Core/
+  Entities/        RentalApplication (aggregate root), Applicant, ResidenceHistory, StatusHistory,
+                   ManagerNote, Property, Unit, UnitType, Lease, ApplicationStatusType
+  Enums/           ApplicationStatus and its IsEditable / IsTerminal / DisplayName helpers
+  Validation/      ApplicantDetailsRules, ResidenceSectionRules, FieldError
+  Dtos/            ApplicantDetails, ResidenceDetails, PropertyDetails, UnitDetails, ResidenceInput
+  Common/          DomainException, AuditableEntity, BusinessTimeProvider, TimeProviderExtensions.Today()
+Data/
+  Configurations/  one EF configuration per entity
+  Migrations/      a single InitialSchema migration
+  Seeding/         DbInitializer (migrate + seed on start), Identity/Property/Application seeders, Bogus data
+  Auditing/        AuditSaveChangesInterceptor, ICurrentUser
+  Services/        RentalApplicationService (applicant), ApplicationReviewService (manager),
+                   ApplicationUpdater (shared load → change → save), PropertyService, ManagerNoteService,
+                   ServiceResult, StaleDataException
+  Queries/         LeaseQueries, ApplicationQueries, ManagerNoteQueries
+Web/
+  Controllers/     Applications, ApplicationResidences, ApplicationApplicants, Reviews, ManagerNotes,
+                   Properties, Units, Account, Home, Api/ApplicationsApi
+  Services/        ApplicationPageBuilder (load + authorize + build the application page), ApplicationAccess
+  Queries/         page-shaped reads: Property, Unit, Review, Home, ApplicationSection, Applications/ApplicationListQuery
+  Authorization/   Policies, ApplicationOperations, RentalApplicationAuthorizationHandler
+  Infrastructure/  ModalResults, StatusBadges, FeatureOptions, User.Id()
+  ViewComponents/  sections that render on first load and refresh in place
+  Models/          view models by feature
+  wwwroot/js/      modal.js (shared modal), grid.js (reusable grid)
+```
+
+## The write path
+
+**Controller → authorization → service → `ApplicationUpdater` → entity → EF Core → SQL Server**
 
 ```mermaid
 sequenceDiagram
     participant C as Controller
-    participant A as Authorization
+    participant B as ApplicationPageBuilder
     participant S as Service
     participant U as ApplicationUpdater
     participant E as RentalApplication
     participant DB as SQL Server
-    C->>A: may this user attempt it?
+    C->>B: AuthorizeAsync(user, id, operation)
     C->>S: e.g. SubmitAsync(id, userId)
     S->>U: UpdateAsync(id, change)
-    U->>DB: load the aggregate
+    U->>DB: load the aggregate (applicants + residences)
     S->>DB: ask what the entity can't know (does the unit have an active lease?)
-    U->>E: application.Submit(...)
-    E-->>U: rule broken → DomainException
-    U->>DB: SaveChanges (concurrency tokens checked)
-    U-->>S: ServiceResult
-    S-->>C: ServiceResult (success, or a message to show)
+    U->>E: application.Submit(...), which throws DomainException if a rule is broken
+    U->>DB: SaveChanges (concurrency tokens checked, audit columns stamped)
+    U-->>C: ServiceResult (success, or a message to show)
 ```
 
-- **Authorization** answers "may this user attempt this?" ([0007](decisions/0007-authorization.md)).
-- **The entity** answers "is it valid now?" and changes its own state ([0001](decisions/0001-rich-domain-model.md)).
-- **The service** supplies facts the entity can't look up, saves, and turns expected failures into a `ServiceResult` ([0006](decisions/0006-service-result.md)).
-- **`ApplicationUpdater`** keeps load → change → save → translate errors in one place, including stale saves and deadlocks ([0005](decisions/0005-concurrency.md)).
-- **The audit interceptor** stamps who changed what and when, so no service sets audit columns by hand.
+Each step has one job:
+- **Authorization** answers "may this user attempt this?"
+- **The entity** answers "is it valid now?" and changes its own state.
+- **The service** supplies database facts, saves, and orchestrates transactions.
+- **`ApplicationUpdater`** turns expected failures into a `ServiceResult`: broken rules, stale saves and deadlocks. It also logs them.
+- **`AuditSaveChangesInterceptor`** stamps created and modified by/at from `ICurrentUser`. No service sets audit columns by hand.
 
-## A read
+Properties, units and notes follow the same shape through `PropertyService` and `ManagerNoteService`.
 
-```mermaid
-sequenceDiagram
-    participant C as Controller / view component / API
-    participant Q as Query class
-    participant DB as SQL Server
-    C->>Q: e.g. ListAsync(user, filter, paging)
-    Q->>DB: filter, sort, page and project in one query
-    DB-->>Q: only the rows and columns needed
-    Q-->>C: view models
-```
+## The read path
 
-Reads don't load entities. They project straight into the shape a page needs, with `AsNoTracking`, so filtering, sorting and paging happen in SQL ([0002](decisions/0002-no-repository-pattern.md), [0003](decisions/0003-queries-in-data-vs-web.md)).
+**Controller / view component / API → query class → EF projection → view model**
 
-The one exception is the application page. It loads the aggregate without tracking, because the authorization handler and the editable-or-read-only decision both need the real entity.
+- Reads use `AsNoTracking` and project straight into the page's shape, so filtering, sorting and paging run in SQL.
+- `Data/Queries` answer questions about the data, such as lease availability. `Web/Queries` return view models. See [decisions](decisions.md#query-classes-without-cqrs-or-mediatr).
+- The application page is the exception. `ApplicationPageBuilder` loads the aggregate without tracking, because the authorization handler and the editable-or-read-only decision need the real entity, then builds one `ApplicationPageViewModel`.
 
-## Pages and partial rendering
-- Pages are server-rendered Razor. JavaScript is limited to `modal.js` (the shared modal) and `grid.js` (the reusable grid).
-- Sections that refresh in place are view components with their own refresh URL, so the same markup renders on first load and after a change ([modal guide](guides/modal-pattern.md)).
-- The application page is one view model and one form. The clicked button decides what the POST does.
+## Aggregate boundaries
+
+| Aggregate root | Owns | Changed only through |
+| --- | --- | --- |
+| `RentalApplication` | `Applicant` rows, `ResidenceHistory`, `StatusHistory`, and the `Lease` it creates on approval | its methods (`Submit`, `Claim`, `Approve`, …) |
+| `Property` | `Unit`s | `AddUnit`, `UpdateUnit`, `RemoveUnit` |
+| `ManagerNote` | itself; foreign key to the application, no navigation | `ManagerNoteService` |
+| `UnitType` | lookup (active or inactive) | seed data |
+
+`AppUser` is the Identity account (login, name, email, role). An `Applicant` row is that person's place on one application. See [domain](domain.md).
+
+## Authorization
+
+1. **A fallback policy** requires sign-in everywhere except the home page, the account pages, static files and, outside production, OpenAPI and Scalar.
+2. **Role policies** (`PropertyManager`, `Applicant`) sit on controllers and actions.
+3. **`RentalApplicationAuthorizationHandler`** decides `View`, `Edit`, `Withdraw`, `Review` and `ManageNotes` for a specific application.
+
+`ApplicationPageBuilder.AuthorizeAsync` checks `View` first and returns **404** when the user can't see the application, so ids don't leak. It returns **403** when they can see it but can't perform the operation. The same checks set the UI flags (`CanEdit`, `CanReview`, `CanManageNotes`, …), so buttons match what the server allows.
+
+Antiforgery tokens are validated on every POST. Login return URLs must be local. `/api` returns 401 and 403 instead of redirecting.
+
+## Concurrency
+
+| What | Protected by |
+| --- | --- |
+| An applicant's own details | SQL `rowversion` on `Applicant`, compared with the version the page loaded |
+| The shared residence list | `ResidenceSectionVersion` GUID on the application, a concurrency token that changes on every residence edit |
+| Status changes (claim, review) | `Status` is a concurrency token |
+| Two approvals for one unit | Serializable transaction around "check for a conflicting lease, then insert"; a deadlock loser gets a friendly message |
+
+Different sections don't interfere with each other; the same section saved twice is rejected as stale. See [decisions](decisions.md#optimistic-concurrency-for-edits-a-serializable-transaction-for-approval).
+
+## UI composition
+
+- Server-rendered Razor with Bootstrap and a small theme layer (`wwwroot/css/site.css`).
+- One shared modal (`modal.js`): failed POSTs return 422 with the partial, and successful ones return JSON and refresh targets. See [workflows](workflows.md#the-modal-pattern).
+- The application page is one view model and one form; the clicked button (`command`) decides what happens. Each section is its own partial, rendered editable or read-only from a server decision.
+- The application list is a reusable grid (`GridViewComponent` + `grid.js`) over `GET /api/applications`, documented with OpenAPI.
+
+## Cross-cutting
+
+- **Time:** a `TimeProvider` singleton using `Business:TimeZone`. `timeProvider.Today()` is the business date; timestamps are UTC.
+- **Logging:** services log status changes at Information, and refused, stale and deadlocked changes and failed sign-ins at Warning. Ids only.
+- **Startup:** `DbInitializer.InitializeAsync` applies migrations and seeds idempotently before the app serves requests.
+- **Feature switches:** `Features:SaveInvalidSections`, read per request.
