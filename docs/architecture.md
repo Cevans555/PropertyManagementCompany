@@ -68,7 +68,7 @@ sequenceDiagram
 - **`ApplicationUpdater`** turns broken rules, stale saves and deadlocks into a `ServiceResult` and logs them.
 - **`AuditSaveChangesInterceptor`** stamps created and modified by/at.
 
-Properties, units and notes follow the same shape through `PropertyService` and `ManagerNoteService`.
+Properties, units and notes follow a similar controller → service → entity path through `PropertyService` and `ManagerNoteService`, without `ApplicationUpdater`.
 
 ## The read path
 
