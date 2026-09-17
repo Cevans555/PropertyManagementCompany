@@ -19,19 +19,19 @@ Core has no reference to EF Core or ASP.NET Core, so its rules are unit tested w
 - **Manager notes** are internal to property managers.
 
 ```mermaid
-stateDiagram-v2
-    [*] --> Draft: Start
-    Draft --> Submitted: Submit
-    Returned --> Submitted: Submit
-    Submitted --> UnderReview: Claim
-    UnderReview --> Submitted: Release
-    UnderReview --> Returned: Return (comment required)
-    UnderReview --> Denied: Deny (comment required)
-    UnderReview --> Approved: Approve (creates lease)
-    Draft --> Withdrawn: Withdraw
-    Submitted --> Withdrawn: Withdraw
-    UnderReview --> Withdrawn: Withdraw
-    Returned --> Withdrawn: Withdraw
+flowchart TD
+    Start([Start application]) --> Draft
+    Draft -- Submit --> Submitted
+    Submitted -- Claim --> UnderReview[Under Review]
+    UnderReview -- Release --> Submitted
+    UnderReview -- "Return (comment)" --> Returned
+    UnderReview -- "Deny (comment)" --> Denied
+    UnderReview -- "Approve (creates lease)" --> Approved
+    Returned -- Submit --> Submitted
+    Draft -- Withdraw --> Withdrawn
+    Submitted -- Withdraw --> Withdrawn
+    UnderReview -- Withdraw --> Withdrawn
+    Returned -- Withdraw --> Withdrawn
 ```
 
 - **Editable by applicants:** Draft and Returned.
