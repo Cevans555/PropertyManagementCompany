@@ -45,17 +45,17 @@ The decisions that aren't obvious from reading one class. Each one covers what w
 
 **Decision.** Services and queries use `PropertyManagementDbContext` directly.
 
-**Why.** The `DbContext` is already a unit of work, and each `DbSet` is already a repository. A generic repository either hides `IQueryable`, losing database-side filtering, projection and paging, or exposes it and adds nothing. Using EF directly keeps `Include`, projections, `ExecuteUpdate` and transactions available where they're needed.
+**Why.** The `DbContext` is already a unit of work, and each `DbSet` is already a repository. A generic repository either hides `IQueryable`, losing database-side filtering, projection and paging, or exposes it and adds little. Using EF directly keeps `Include`, projections, `ExecuteUpdate` and transactions available where they're needed.
 
 **Considered.** A generic `IRepository<T>`, and per-entity repositories. Both duplicate `DbSet` and gain a method for every query shape.
 
-**Consequence.** Services aren't unit tested against mocks. They're integration tested against real SQL Server, which is also the only place concurrency behaviour can be proven. See [testing](testing.md).
+**Consequence.** Services aren't unit tested against mocks. They're integration tested against real SQL Server, which is where concurrency behaviour can actually be exercised. See [testing](testing.md).
 
 ## Query classes without CQRS or MediatR
 
 **Decision.** Reads that are reusable, complex or shaped for a page live in named query classes, grouped by concept. **`Data/Queries`** answers questions about the data and returns plain values (`LeaseQueries`, `ApplicationQueries`, `ManagerNoteQueries`). **`Web/Queries`** projects into view models (`PropertyQueries`, `ReviewQueries`, `Applications/ApplicationListQuery`, …). A one-line lookup used in a single place can stay in the service that uses it.
 
-**Why.** Controllers and view components stay focused on handling a request. Where a query lives follows the direction of references: Data can't return Web's view models without a parallel DTO for every page, and with one front end that DTO layer would be pure cost.
+**Why.** Controllers and view components stay focused on handling a request. Where a query lives follows the direction of references: Data can't return Web's view models without a parallel DTO for every page, and with one front end that DTO layer would add cost without much benefit.
 
 **Considered.**
 - **MediatR and full CQRS.** A handler per request and a pipeline, with no second front end or cross-cutting behaviour to justify them.
@@ -79,7 +79,7 @@ The decisions that aren't obvious from reading one class. Each one covers what w
 - **Approval:** checks for a lease covering today or overlapping the new term, then inserts the lease, all inside a `Serializable` transaction. If two approvals race, SQL Server makes one a deadlock victim. `ApplicationUpdater` walks the inner-exception chain for error 1205, because EF wraps it several levels deep, and returns a "try again" message.
 
 **Why the difference.**
-- **Edits:** the risk is overwriting someone else's work, and conflicts are rare. Optimistic checks cost nothing until they fail, then tell the user to reload, which matches bonus 5's "rejected as stale with a message to reload".
+- **Edits:** the risk is overwriting someone else's work, and conflicts are rare. Optimistic checks cost very little until they fail, then tell the user to reload, which matches bonus 5's "rejected as stale with a message to reload".
 - **Tokens per section:** saves to different sections must not interfere, so each section has its own token. Residences are separate rows, so no single row version covers "the list"; a section-level version does.
 - **Approval:** the risk is two leases for one unit. That's a rule across rows ("no overlapping lease for this unit"), which an optimistic token on one row can't enforce. Overlapping date ranges can't be a unique index either. A serializable transaction makes check-then-insert atomic.
 

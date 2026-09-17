@@ -1,92 +1,100 @@
 # Handoff
 
-For someone picking this project up with no prior context: where it stands, what not to break, and where to make changes.
+Where the project stands, what not to break, and where to make changes.
 
 ## Current state
 
-- **`main` is the submitted technical assessment.** It implements the whole specification and all five bonuses: the grid with its API and OpenAPI, claim and release, manager notes, save-invalid sections, and co-applicants with concurrency.
-- **Build and tests:** the build has no warnings, and the unit, integration and browser suites all pass.
-- **Known limitations and deliberate omissions:** see below. None are unfinished work; each was a scope decision.
-- **The `extras` branch** holds improvements beyond the specification and is kept out of `main`, so `main` remains the submitted assessment. It uses its own database (`PropertyManagementCompany_Extras`). Its README lists each extra. So far that's a warning when an applicant already holds a lease, and browser coverage of every screen. New experiments belong there, not on `main`.
+- **`main` is the submitted assessment:** the full specification and all five bonuses.
+- **The `extras` branch** holds improvements beyond the specification and is kept out of `main`. It uses its own database (`PropertyManagementCompany_Extras`), and its README lists each extra.
+- **Limitations:** the items listed at the end of this page are scope decisions, not unfinished work.
 
-## Getting oriented (about 30–45 minutes)
+## Getting oriented
 
-1. [README](../README.md): run the app, and sign in as `manager1@demo.com` and `applicant1@demo.com`.
-2. Walk through one application end to end as both roles ([workflows](workflows.md)).
-3. [architecture](architecture.md), then [domain](domain.md).
-4. Read `Core/Entities/RentalApplication.cs`. Most of the rules are there.
+1. Run the app ([README](../README.md)).
+2. Walk one application end to end:
+   1. As `applicant1@demo.com`, browse available units, apply, fill in applicant information, add a residence in the modal, and submit from the summary.
+   2. As `manager1@demo.com`, claim it from the review queue, return it with a comment, and add a manager note.
+   3. As the applicant, correct it and resubmit.
+   4. As the manager, claim it again and approve it with a start date.
+3. Read [architecture](architecture.md).
+4. Read `Core/Entities/RentalApplication.cs`, where most of the rules are.
 5. Read `Data/Services/ApplicationUpdater.cs` and `ApplicationReviewService.ApproveAsync`.
-6. Read `Web/Controllers/ApplicationsController.cs` (the one-form, one-action page) and `Web/Services/ApplicationPageBuilder.cs`.
-7. [decisions](decisions.md) and [testing](testing.md).
+6. Read `Web/Controllers/ApplicationsController.cs` and `Web/Services/ApplicationPageBuilder.cs`.
+7. Read [decisions](decisions.md) and [testing](testing.md).
 
 ## Don't accidentally break
 
-| Invariant | Why it matters | Where |
-| --- | --- | --- |
-| Application lifecycle rules live in `RentalApplication` | Every code path, including the seeder, goes through the same checks | `Core/Entities/RentalApplication.cs` |
-| Entities don't query the database; services ask and pass the answer in | Keeps Core free of EF and unit testable | services in `Data/Services` |
-| Never bypass resource authorization for an application | Applicants may only reach applications they're on; ids must not leak (404, not 403) | `ApplicationPageBuilder.AuthorizeAsync`, `RentalApplicationAuthorizationHandler` |
-| The UI flags come from the same authorization checks | Buttons must match what the server allows | `ApplicationPageBuilder.BuildAsync` |
-| Approval keeps its serializable check-then-insert and deadlock handling | Otherwise two approvals can create two leases for one unit | `ApplicationReviewService.ApproveAsync`, `ApplicationUpdater.IsDeadlock` |
-| Concurrency stays per section (applicant row version, residence section version) | Co-applicants must be able to save different sections at once, while same-section conflicts are rejected | `SaveApplicantDetailsAsync`, residence methods, EF configurations |
-| Manager notes never appear in applicant-facing reads | Bonus 3: never rendered or returned. Don't add a notes navigation to `RentalApplication` or notes to any applicant projection or API | `ManagerNote`, `ManagerNotesController`, `ApplicationListItem` |
-| An inactive unit type stays on existing units but can't be newly selected | Enforced in the domain, not just the dropdown | `Unit`, `UnitQueries` |
-| Bonus 4 changes what may be saved, never what counts as valid | Validity is recalculated at the Summary and at Submit | `Core/Validation`, `ApplicationsController`, `RentalApplication.Submit` |
-| All date rules use `timeProvider.Today()` | "Today" is the business date, not the UTC date | anywhere a date is compared |
-| `options.Stores.MaxLengthForKeys = 128` stays in `Program.cs` | The migration was generated with it; removing it makes the model differ and the app refuses to start | `Program.cs`, `TestDatabase` |
-| The connection string is read lazily inside `AddDbContext` | Otherwise tests silently run against the development database | `Program.cs` |
-| `main` is the submitted assessment | Put experiments on `extras` | branches |
+| Invariant | Where |
+| --- | --- |
+| Application lifecycle rules live in `RentalApplication`; entities don't query the database, services ask and pass the answer in | `Core/Entities`, `Data/Services` |
+| Never bypass resource authorization for an application, and keep 404 for applications a user can't view | `ApplicationPageBuilder.AuthorizeAsync`, `RentalApplicationAuthorizationHandler` |
+| Approval keeps its serializable check-then-insert and deadlock handling | `ApplicationReviewService.ApproveAsync`, `ApplicationUpdater` |
+| Concurrency stays per section, so co-applicants can save different sections at once | `Applicant` row version, `ResidenceSectionVersion` |
+| Manager notes never reach applicant-facing pages, projections or the API; no notes navigation on `RentalApplication` | `ManagerNote`, `ManagerNotesController`, `Models/Api` |
+| An inactive unit type stays on existing units but can't be newly selected | `Unit`, `UnitQueries` |
+| Bonus 4 changes what may be saved, never what counts as valid | `Core/Validation`, `RentalApplication.Submit` |
+| Date rules use `timeProvider.Today()`, not the UTC date | anywhere dates are compared |
+| `options.Stores.MaxLengthForKeys = 128` stays; the migration was generated with it | `Program.cs` |
+| The connection string is read lazily in `AddDbContext`, so tests can point the app at their own database | `Program.cs` |
 
 ## Where do I change X?
 
 | To change… | Look in |
 | --- | --- |
-| Application lifecycle rules, status transitions | `Core/Entities/RentalApplication.cs` |
-| Section validation rules (applicant fields, residences) | `Core/Validation` |
-| Lease term or start-date rules | `Core/Entities/Lease.cs` |
-| Unit and property rules (unit numbers, rent, unit types) | `Core/Entities/Property.cs`, `Unit.cs` |
-| A database-backed business question (is it leased? does it conflict?) | `Data/Queries` |
-| Workflow orchestration, transactions, logging of events | `Data/Services` |
-| Stale-save or deadlock handling, and their messages | `Data/Services/ApplicationUpdater.cs` |
-| Who can access something | `Web/Authorization` (handler and policies) and the controller's `[Authorize]` |
-| What a page or list shows | `Web/Queries` and the matching view model in `Web/Models` |
-| How the application page is assembled | `Web/Services/ApplicationPageBuilder.cs`, `Views/Applications/_*Section.cshtml` |
-| Continue, Back and Submit behaviour | `ApplicationsController.Details` (POST) |
-| The review modal, claim and release | `Web/Controllers/ReviewsController.cs`, `Views/Reviews/_ReviewForm.cshtml` |
-| The application list columns or filters | `ApplicationListPageViewModel.Grid(...)`, `Queries/Applications/ApplicationListQuery.cs`, `Models/Api` |
-| The shared modal behaviour | `wwwroot/js/modal.js`, `Infrastructure/ModalResults.cs` |
-| Styling and theme colours | `wwwroot/css/site.css` (CSS variables at the top) |
+| Lifecycle rules and status transitions | `Core/Entities/RentalApplication.cs` |
+| Section validation rules | `Core/Validation` |
+| Lease term and start-date rules | `Core/Entities/Lease.cs` |
+| Unit and property rules | `Core/Entities/Property.cs`, `Unit.cs` |
+| A database-backed business question | `Data/Queries` |
+| Workflow orchestration and transactions | `Data/Services` |
+| Stale-save and deadlock handling | `Data/Services/ApplicationUpdater.cs` |
+| Who can access something | `Web/Authorization`, controller `[Authorize]` attributes |
+| What a page or list shows | `Web/Queries`, `Web/Models` |
+| Application page composition | `Web/Services/ApplicationPageBuilder.cs`, `Views/Applications/_*Section.cshtml` |
+| Continue, Back and Submit | `ApplicationsController.Details` (POST) |
+| Review modal, claim and release | `ReviewsController`, `Views/Reviews/_ReviewForm.cshtml` |
+| Application list columns and filters | `ApplicationListPageViewModel.Grid(...)`, `Queries/Applications/ApplicationListQuery.cs` |
+| Theme colours | `wwwroot/css/site.css` (variables at the top) |
 | Seed data | `Data/Seeding` |
-| The database schema | the entity and `Data/Configurations`, then `dotnet ef migrations add <Name> --project src/PropertyManagement.Data --startup-project src/PropertyManagement.Web` |
-| Feature switches, the business time zone, the connection string | `appsettings.json` |
+| Schema | the entity and `Data/Configurations`, then `dotnet ef migrations add <Name> --project src/PropertyManagement.Data --startup-project src/PropertyManagement.Web` |
 
 ## Common tasks
 
-**Add a schema change.** Change the entity and its configuration, then add a migration with the command above. It applies automatically on the next start. The integration tests also migrate their own database, so a model the migration doesn't match fails immediately.
+**Add a modal (no JavaScript needed):**
+1. A form partial that renders its own header, body and footer.
+2. A GET action returning `PartialView(...)`.
+3. A POST action returning `this.ModalInvalid(partial, model)` when input is invalid, or `this.ToModalResult(result, partial, model)` after calling the service.
+4. Put the list being refreshed in a view component, inside a wrapper with an `id` and a `data-refresh-url` pointing at an action that returns `ViewComponent(...)` (see `UnitsController.Table`).
+5. Give the trigger `data-modal-url` and `data-modal-refresh="#wrapper-id"`. Deletes reuse `_DeleteConfirm.cshtml`.
 
-**Add a modal.** Follow [workflows → the modal pattern](workflows.md#the-modal-pattern). No JavaScript is needed.
+**Reuse the grid:**
+1. A query returning `PagedResult<TRow>` that filters, sorts and pages in SQL, with every sort ending on a unique key. Model it on `ApplicationListQuery`.
+2. An API action with a validated request model and `ProducesResponseType` attributes.
+3. A `GridViewModel` describing the columns (`Text`, `Date`, `Badge` or `Link`).
+4. `@await Component.InvokeAsync("Grid", new { grid = ... })`.
 
-**Add another grid.** Follow [workflows → the application grid](workflows.md#the-application-grid).
+**Add a status:**
+1. Update `ApplicationStatus` and its extensions.
+2. Add it to the `HasData` in `ApplicationStatusTypeConfiguration`, with a migration.
+3. Add the method on `RentalApplication`.
+4. Add the service method, authorization operation, controller action and `StatusBadges` class.
+5. Add tests at each level.
 
-**Add a status or workflow step.** Update `ApplicationStatus` and its extensions, add it to the `HasData` in `ApplicationStatusTypeConfiguration` with a migration (it's a lookup table), add the method on `RentalApplication`, then the service method, authorization operation, controller action and badge class (`StatusBadges`), and tests at each level.
+## Known limitations
 
-## Known limitations and deliberate omissions
-
-- **Anyone can register as a property manager.** The specification asks for role choice at sign-up as a convenience. A real system would invite managers instead.
-- **Demo accounts with a known password are seeded in every environment,** because the specification requires seeding on start. A real deployment would seed demo users only outside production.
-- **No email confirmation, password reset or account management pages.** Identity supports them; they weren't in scope.
-- **Unit types are switched between active and inactive only through seed data.** There's no admin screen.
-- **One company-wide business time zone,** not one per property.
-- **No real-time updates between co-applicants.** Conflicts are detected when saving, which the specification allows.
-- **The property list and review queue aren't paged.** Only the application list uses the grid.
-- **Logging goes to the default console providers only.**
-- **No CI pipeline or container setup.**
-- **The setup assumes SQL Server LocalDB on Windows.** Any SQL Server works by changing `DefaultConnection`.
+- **Anyone can register as a property manager.** The specification asks for role choice at sign-up; a real system would invite managers instead.
+- **Demo accounts with a known password are seeded in every environment,** because the specification requires seeding on start.
+- **No email confirmation, password reset or account management pages.**
+- **Unit types are switched between active and inactive only through seed data.**
+- **One company-wide business time zone.**
+- **No real-time updates between co-applicants.** Conflicts are detected when saving.
+- **The property list and review queue aren't paged.**
+- **No CI pipeline.** The setup assumes LocalDB; any SQL Server works by changing `DefaultConnection`.
 
 ## Conventions
 
-- One type per file. Block-bodied methods. Explicit constructors. Member order: constants, fields, properties, constructors, methods.
-- Services return `ServiceResult`; controllers branch on `Succeeded`.
-- No controller or view component injects the `DbContext` for reads; use a query class.
-- Comments only explain a non-obvious local constraint. The README says how to run the project, and `docs/` says why it's designed this way.
-- Branches: one pull request per change into `main`, merged with a merge commit. Experiments go on `extras`.
+- One type per file, block-bodied methods, explicit constructors.
+- Services return `ServiceResult`.
+- Reads go through query classes, not the `DbContext` in controllers.
+- The README explains how to run the project, `docs/` explains why it's designed this way, and code comments explain one non-obvious local constraint.
+- Changes reach `main` through pull requests; experiments go on `extras`.
