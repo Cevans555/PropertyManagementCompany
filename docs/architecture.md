@@ -20,7 +20,6 @@ Core has no reference to EF Core or ASP.NET Core, so its rules are unit tested w
 
 ```mermaid
 stateDiagram-v2
-    state "Under Review" as UnderReview
     [*] --> Draft: Start
     Draft --> Submitted: Submit
     Returned --> Submitted: Submit
