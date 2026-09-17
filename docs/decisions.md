@@ -24,7 +24,7 @@ The decisions that aren't obvious from reading one class. Each one covers what w
 **Why.**
 - **What was submitted must stay as submitted.** If someone later changes their account name or email, applications they already submitted shouldn't change.
 - **Each application gets its own details.** The same person can apply for two units with different current addresses or phone numbers.
-- **Per-applicant state lives with the application.** `Applicant` carries its own row version and "saved without errors" state, which is what lets two co-applicants edit at the same time.
+- **Per-applicant state lives with the application.** `Applicant` carries its own row version and whether its section has been saved, which supports independent co-applicant editing.
 - **Core stays free of Identity.** Core has no dependency on Identity, and `AppUser` extends `IdentityUser`, so it has to live in Data.
 
 **Considered.** Storing application details on the account. That would couple every application to the account's current values, and co-applicants would need a join table carrying section state anyway.
@@ -76,7 +76,7 @@ The decisions that aren't obvious from reading one class. Each one covers what w
 - **An applicant's own details:** a SQL `rowversion` on `Applicant`.
 - **The shared residence list:** a `ResidenceSectionVersion` GUID on the application. It's a concurrency token, checked and renewed on every add, edit, remove and save.
 - **Claims and reviews:** `Status` is a concurrency token.
-- **Approval:** checks for a lease covering today or overlapping the new term, then inserts the lease, all inside a `Serializable` transaction. If two approvals race, SQL Server makes one a deadlock victim. `ApplicationUpdater` walks the inner-exception chain for error 1205, because EF wraps it several levels deep, and returns a "try again" message.
+- **Approval:** checks for a lease covering today or overlapping the new term, then inserts the lease, all inside a `Serializable` transaction. If two approvals race, SQL Server may resolve the contention with a deadlock victim; `ApplicationUpdater` handles error 1205 (walking the inner-exception chain, because EF wraps it several levels deep) and returns a retry message.
 
 **Why the difference.**
 - **Edits:** the risk is overwriting someone else's work, and conflicts are rare. Optimistic checks cost very little until they fail, then tell the user to reload, which matches bonus 5's "rejected as stale with a message to reload".
@@ -116,7 +116,7 @@ The decisions that aren't obvious from reading one class. Each one covers what w
 
 **Why.**
 - **The two behaviours conflict.** The base specification says Continue saves only a valid section; bonus 4 says the opposite. A switch lets the app match the base specification by default and show the bonus on demand.
-- **Validity is never stored.** Recalculating means an application saved with errors can never be submitted, even after the switch is turned off or the rules change.
+- **Validity is never stored.** Recalculating means an application can't be submitted while any error remains, even after the switch is turned off or the rules change.
 
 **Considered.**
 - **Storing an "is valid" flag.** It can go stale.

@@ -1,6 +1,6 @@
 # Testing
 
-Commands and prerequisites are in the [README](../README.md#tests). Each run creates its own uniquely named LocalDB database and drops it afterwards.
+Commands and prerequisites are in the [README](../README.md#tests). The integration and browser test runs each create a uniquely named LocalDB database and drop it afterwards.
 
 ## What each suite is responsible for
 
