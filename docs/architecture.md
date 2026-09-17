@@ -20,6 +20,7 @@ Core has no reference to EF Core or ASP.NET Core, so its rules are unit tested w
 
 ```mermaid
 stateDiagram-v2
+    state "Under Review" as UnderReview
     [*] --> Draft: Start
     Draft --> Submitted: Submit
     Returned --> Submitted: Submit
@@ -39,7 +40,7 @@ stateDiagram-v2
 - **Status history:** every change is recorded (who, when, comment) and shown to managers.
 - **Active-lease check:** runs at start, at submit and at approval. Approval also rejects a lease that would overlap.
 
-## The write path
+## The rental-application write path
 
 **Controller → authorization → service → `ApplicationUpdater` → entity → EF Core → SQL Server**
 
