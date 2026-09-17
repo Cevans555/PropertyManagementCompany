@@ -17,6 +17,15 @@ It uses its own database, `PropertyManagementCompany_Extras`, so schema changes 
 
 It is a warning, not a rule: someone may be moving between units or renting a second one, so approval is never blocked. Ended leases and the application's own lease don't count, and applicants never see it. The rule lives once in `Web/Queries/ExistingLeaseQueries.cs`; the queue reuses it as a subquery, so the flag is computed in SQL rather than per row. Covered by five integration tests (`Reviews/ExistingLeaseTests.cs`) and one browser test (`ExistingLeaseWarningTests.cs`).
 
+**Full browser coverage.** `main` keeps a deliberately small Playwright smoke suite. Here it covers every screen and user flow in a real browser, 40 tests grouped by feature under `tests/PropertyManagement.BrowserTests`:
+
+- **Account:** register from the home page's role cards (role preselected), register as a manager, client-side password mismatch with no request sent, a wrong password then log in and out, and returning to a protected page after signing in
+- **Navigation:** each role's menu and active link, an applicant opening a manager page (access denied), the dashboard link, and the collapsed phone menu with no sideways scrolling
+- **Properties and units:** add, edit, rename and remove properties; add a unit with a duplicate-number error shown in the modal; edit rent; inactive unit types shown only as the current choice; remove a unit, and a refused removal when it has applications
+- **Applications:** the full applicant journey; residence modal server errors with client validation still wired up; edit and remove residences; Back without saving; withdraw; add a co-applicant after an unknown-email error; continue an open application from Available units; a submitted application read-only but still browsable; and two applicants saving the same section, where the second is told to reload
+- **Reviews:** approve with a chosen date, deny needing a comment, claim and release, return to the applicant who can edit again, manager notes added, edited and removed without reloading and never shown to the applicant, status history for managers only, and the existing lease warning
+- **Grid:** paging, sorting, filtering and URL state, the empty state, an applicant seeing only their own rows, and opening an application from a row
+
 
 ### Prerequisites
 - .NET 10 SDK

@@ -32,11 +32,22 @@ public sealed class BrowserFixture : IAsyncLifetime
         await ((IAsyncLifetime)App).DisposeAsync();
     }
 
-    public async Task<(IBrowserContext Context, IPage Page)> SignInAsync(string email)
+    public async Task<(IBrowserContext Context, IPage Page)> NewPageAsync(int width = 1280, int height = 800)
     {
-        var context = await Browser.NewContextAsync(new BrowserNewContextOptions { BaseURL = App.BaseUrl });
+        var context = await Browser.NewContextAsync(new BrowserNewContextOptions
+        {
+            BaseURL = App.BaseUrl,
+            ViewportSize = new ViewportSize { Width = width, Height = height }
+        });
         context.SetDefaultTimeout(15_000);
         var page = await context.NewPageAsync();
+
+        return (context, page);
+    }
+
+    public async Task<(IBrowserContext Context, IPage Page)> SignInAsync(string email)
+    {
+        var (context, page) = await NewPageAsync();
 
         await page.GotoAsync("/Account/Login");
         await page.GetByLabel("Email").FillAsync(email);
