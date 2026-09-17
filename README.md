@@ -66,6 +66,8 @@ PropertyManagement.slnx
 References point toward Core: Web → Data, Core; Data → Core. The unit tests reference Core and Web (for the authorization handler), the integration tests reference all three, and the browser tests build on the integration tests' web factory and helpers.
 
 ## Design notes
+The notes below summarise the design. For more depth, `docs/` has the [architecture](docs/architecture.md), [design decisions](docs/decisions.md), the [testing approach](docs/testing.md) and a [handoff](docs/handoff.md) guide for picking the project up.
+
 
 **Rich entities, thin services.** `RentalApplication` is the aggregate root and enforces the rules; nothing can change an application except through its methods. Services load it, answer the questions it can't (such as whether a unit is already leased), call the method and save.
 
